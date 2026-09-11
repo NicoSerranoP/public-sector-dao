@@ -13,7 +13,6 @@ import {InstallNFTVotingScript, InstallParams} from "../../script/InstallNFTVoti
 import {NFTVoting} from "../../src/NFTVoting.sol";
 import {INFTVoting} from "../../src/base/INFTVoting.sol";
 import {GovernanceERC721} from "../../src/erc721/GovernanceERC721.sol";
-import {VotingPowerCondition} from "../../src/condition/VotingPowerCondition.sol";
 
 /// @dev Exercises InstallNFTVotingScript against a real OSx deployment (DAOFactory) on a fork,
 ///     covering both the new-DAO and existing-DAO install paths plus a full proposal lifecycle.
@@ -25,19 +24,18 @@ contract InstallNFTVotingTest is ForkTestBase {
     }
 
     function test_WhenCreatingANewDaoWithANewToken() external {
-        (DAO dao, NFTVoting plugin, IVotesUpgradeable token, VotingPowerCondition condition) =
+        (DAO dao, NFTVoting plugin, IVotesUpgradeable token) =
             script.createDaoAndInstall(daoFactory, _daoSettings(), _defaultParams());
 
         assertTrue(
             dao.isGranted(address(dao), address(plugin), dao.EXECUTE_PERMISSION_ID(), ""), "Plugin should be installed"
         );
         assertTrue(
-            dao.isGranted(address(plugin), address(0x1234), plugin.CREATE_PROPOSAL_PERMISSION_ID(), ""),
+            plugin.canCreateProposal(address(0x1234)),
             "Anyone should be able to create proposals (minProposerVotingPower == 0)"
         );
         assertNotEq(address(token), address(0), "A new token should have been minted");
         assertTrue(plugin.isMember(address(this)), "Deployer should hold the newly minted NFT");
-        assertNotEq(address(condition), address(0));
 
         // The DAO should be able to mint, burn and force-transfer vote NFTs.
         GovernanceERC721 nft = GovernanceERC721(address(token));
@@ -66,7 +64,7 @@ contract InstallNFTVotingTest is ForkTestBase {
         InstallParams memory params = _defaultParams();
         params.existingToken = address(existingToken);
 
-        (DAO dao, NFTVoting plugin, IVotesUpgradeable token,) =
+        (DAO dao, NFTVoting plugin, IVotesUpgradeable token) =
             script.createDaoAndInstall(daoFactory, _daoSettings(), params);
 
         assertTrue(
@@ -82,14 +80,12 @@ contract InstallNFTVotingTest is ForkTestBase {
         DAO dao = build();
         dao.grant(address(dao), address(script), dao.EXECUTE_PERMISSION_ID());
 
-        (NFTVoting plugin, IVotesUpgradeable token, VotingPowerCondition condition) =
-            script.installOnExistingDao(dao, _defaultParams());
+        (NFTVoting plugin, IVotesUpgradeable token) = script.installOnExistingDao(dao, _defaultParams());
 
         assertTrue(
             dao.isGranted(address(dao), address(plugin), dao.EXECUTE_PERMISSION_ID(), ""), "Plugin should be installed"
         );
         assertNotEq(address(token), address(0));
-        assertNotEq(address(condition), address(0));
     }
 
     /// @dev Full create -> vote -> execute cycle through a freshly installed plugin.
@@ -97,7 +93,7 @@ contract InstallNFTVotingTest is ForkTestBase {
         InstallParams memory params = _defaultParams();
         params.nftCount = 3;
 
-        (DAO dao, NFTVoting plugin,,) = script.createDaoAndInstall(daoFactory, _daoSettings(), params);
+        (DAO dao, NFTVoting plugin,) = script.createDaoAndInstall(daoFactory, _daoSettings(), params);
 
         // Move past the mint's checkpoint so the proposal's voting-power snapshot sees it.
         vm.roll(block.number + 1);

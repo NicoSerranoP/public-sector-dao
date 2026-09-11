@@ -168,4 +168,10 @@ interface INFTVoting {
 
     /// @notice Thrown if the voting power is zero
     error NoVotingPower();
+
+    /// @notice Thrown if the account is not allowed to create a proposal, either because there is
+    ///     no voting power in the DAO at all, or because the account doesn't individually meet
+    ///     `minProposerVotingPower`.
+    /// @param account The address that attempted to create the proposal.
+    error ProposalCreationForbidden(address account);
 }

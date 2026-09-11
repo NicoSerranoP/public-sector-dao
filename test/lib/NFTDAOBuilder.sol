@@ -7,7 +7,6 @@ import {DAO} from "@aragon/osx/core/dao/DAO.sol";
 import {NFTVoting} from "../../src/NFTVoting.sol";
 import {GovernanceERC721} from "../../src/erc721/GovernanceERC721.sol";
 import {INFTVoting} from "../../src/base/INFTVoting.sol";
-import {VotingPowerCondition} from "../../src/condition/VotingPowerCondition.sol";
 import {ProxyLib} from "@aragon/osx-commons-contracts/src/utils/deployment/ProxyLib.sol";
 import {IPlugin} from "@aragon/osx-commons-contracts/src/plugin/IPlugin.sol";
 import {IVotesUpgradeable} from "@openzeppelin/contracts-upgradeable/governance/utils/IVotesUpgradeable.sol";
@@ -116,10 +115,7 @@ contract NFTDAOBuilder is TestBase {
     }
 
     /// @dev Creates a DAO with the given orchestration settings.
-    function build()
-        public
-        returns (DAO dao, NFTVoting plugin, IVotesUpgradeable token_, VotingPowerCondition condition)
-    {
+    function build() public returns (DAO dao, NFTVoting plugin, IVotesUpgradeable token_) {
         // Deploy the DAO with `daoOwner` as ROOT
         dao = DAO(
             payable(ProxyLib.deployUUPSProxy(
@@ -172,11 +168,8 @@ contract NFTDAOBuilder is TestBase {
 
         vm.startPrank(daoOwner);
 
-        // Allow anyone with enough voting power to create proposals (only if set)
-        if (minProposerVotingPower > 0) {
-            condition = new VotingPowerCondition(address(plugin));
-            dao.grantWithCondition(address(plugin), ANY_ADDR, plugin.CREATE_PROPOSAL_PERMISSION_ID(), condition);
-        }
+        // Allow anyone to create proposals; `NFTVoting.createProposal` gates on voting power itself.
+        dao.grant(address(plugin), ANY_ADDR, plugin.CREATE_PROPOSAL_PERMISSION_ID());
 
         // Allow the plugin to execute on the DAO
         dao.grant(address(dao), address(plugin), dao.EXECUTE_PERMISSION_ID());

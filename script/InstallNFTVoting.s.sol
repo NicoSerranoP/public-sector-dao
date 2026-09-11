@@ -15,7 +15,6 @@ import {IVotesUpgradeable} from "@openzeppelin/contracts-upgradeable/governance/
 import {NFTVoting} from "../src/NFTVoting.sol";
 import {INFTVoting} from "../src/base/INFTVoting.sol";
 import {GovernanceERC721} from "../src/erc721/GovernanceERC721.sol";
-import {VotingPowerCondition} from "../src/condition/VotingPowerCondition.sol";
 
 /// @notice Bundles the parameters needed to deploy and wire up an `NFTVoting` plugin instance.
 /// @dev When `existingToken == address(0)`, a new GovernanceERC721 is minted entirely to the
@@ -56,7 +55,6 @@ contract InstallNFTVotingScript is Script {
     DAO public dao;
     NFTVoting public plugin;
     IVotesUpgradeable public token;
-    VotingPowerCondition public condition;
 
     modifier broadcast() {
         uint256 privKey = vm.envUint("DEPLOYER_KEY");
@@ -93,12 +91,12 @@ contract InstallNFTVotingScript is Script {
         DAOFactory daoFactory = DAOFactory(vm.envAddress("DAO_FACTORY_ADDRESS"));
         vm.label(address(daoFactory), "DaoFactory");
 
-        (dao, plugin, token, condition) = createDaoAndInstall(daoFactory, readDaoSettings(), readInstallParams());
+        (dao, plugin, token) = createDaoAndInstall(daoFactory, readDaoSettings(), readInstallParams());
     }
 
     function _runInstallOnExistingDao(address _existingDao) internal {
         dao = DAO(payable(_existingDao));
-        (plugin, token, condition) = installOnExistingDao(dao, readInstallParams());
+        (plugin, token) = installOnExistingDao(dao, readInstallParams());
     }
 
     function readDaoSettings() public view returns (DAOFactory.DAOSettings memory daoSettings) {
@@ -114,24 +112,22 @@ contract InstallNFTVotingScript is Script {
         DAOFactory _daoFactory,
         DAOFactory.DAOSettings memory _daoSettings,
         InstallParams memory _params
-    ) public returns (DAO dao_, NFTVoting plugin_, IVotesUpgradeable token_, VotingPowerCondition condition_) {
+    ) public returns (DAO dao_, NFTVoting plugin_, IVotesUpgradeable token_) {
         (dao_,) = _daoFactory.createDao(_daoSettings, new DAOFactory.PluginSettings[](0));
-        (plugin_, token_, condition_) = installOnExistingDao(dao_, _params);
+        (plugin_, token_) = installOnExistingDao(dao_, _params);
     }
 
     /// @notice Deploys and wires up the `NFTVoting` plugin on an already-deployed DAO.
     /// @dev The caller must already hold `EXECUTE_PERMISSION_ID` on `_dao`.
     function installOnExistingDao(DAO _dao, InstallParams memory _params)
         public
-        returns (NFTVoting plugin_, IVotesUpgradeable token_, VotingPowerCondition condition_)
+        returns (NFTVoting plugin_, IVotesUpgradeable token_)
     {
         bool mintedNewToken = _params.existingToken == address(0);
         token_ = _resolveToken(_dao, _params, mintedNewToken);
         plugin_ = _deployPlugin(_dao, _params, token_);
-        condition_ = new VotingPowerCondition(address(plugin_));
-        vm.label(address(condition_), "VotingPowerCondition");
 
-        Action[] memory actions = _buildPermissionActions(_dao, plugin_, token_, condition_, mintedNewToken);
+        Action[] memory actions = _buildPermissionActions(_dao, plugin_, token_, mintedNewToken);
         _dao.execute(bytes32(0), actions, 0);
     }
 
@@ -191,20 +187,16 @@ contract InstallNFTVotingScript is Script {
         vm.label(address(plugin_), "NFTVoting");
     }
 
-    function _buildPermissionActions(
-        DAO _dao,
-        NFTVoting _plugin,
-        IVotesUpgradeable _token,
-        VotingPowerCondition _condition,
-        bool _mintedNewToken
-    ) internal view returns (Action[] memory actions) {
+    function _buildPermissionActions(DAO _dao, NFTVoting _plugin, IVotesUpgradeable _token, bool _mintedNewToken)
+        internal
+        view
+        returns (Action[] memory actions)
+    {
         actions = new Action[](_mintedNewToken ? 10 : 6);
 
         actions[0] = _grantAction(_dao, address(_plugin), address(_dao), _plugin.UPDATE_VOTING_SETTINGS_PERMISSION_ID());
         actions[1] = _grantAction(_dao, address(_dao), address(_plugin), _dao.EXECUTE_PERMISSION_ID());
-        actions[2] = _grantWithConditionAction(
-            _dao, address(_plugin), ANY_ADDR, _plugin.CREATE_PROPOSAL_PERMISSION_ID(), _condition
-        );
+        actions[2] = _grantAction(_dao, address(_plugin), ANY_ADDR, _plugin.CREATE_PROPOSAL_PERMISSION_ID());
         actions[3] = _grantAction(_dao, address(_plugin), address(_dao), _plugin.SET_TARGET_CONFIG_PERMISSION_ID());
         actions[4] = _grantAction(_dao, address(_plugin), address(_dao), _plugin.SET_METADATA_PERMISSION_ID());
         actions[5] = _grantAction(_dao, address(_plugin), ANY_ADDR, _plugin.EXECUTE_PROPOSAL_PERMISSION_ID());
@@ -225,20 +217,6 @@ contract InstallNFTVotingScript is Script {
     {
         return Action({
             to: address(_dao), value: 0, data: abi.encodeCall(PermissionManager.grant, (_where, _who, _permissionId))
-        });
-    }
-
-    function _grantWithConditionAction(
-        DAO _dao,
-        address _where,
-        address _who,
-        bytes32 _permissionId,
-        VotingPowerCondition _condition
-    ) internal pure returns (Action memory) {
-        return Action({
-            to: address(_dao),
-            value: 0,
-            data: abi.encodeCall(PermissionManager.grantWithCondition, (_where, _who, _permissionId, _condition))
         });
     }
 
@@ -278,7 +256,6 @@ contract InstallNFTVotingScript is Script {
         console2.log("- DAO:                       ", address(dao));
         console2.log("- NFTVoting plugin:          ", address(plugin));
         console2.log("- Token:                     ", address(token));
-        console2.log("- VotingPowerCondition:      ", address(condition));
         console2.log("");
     }
 
@@ -286,8 +263,7 @@ contract InstallNFTVotingScript is Script {
         string memory artifacts = "output";
         artifacts.serialize("dao", address(dao));
         artifacts.serialize("plugin", address(plugin));
-        artifacts.serialize("token", address(token));
-        artifacts = artifacts.serialize("condition", address(condition));
+        artifacts = artifacts.serialize("token", address(token));
 
         string memory networkName = vm.envOr("NETWORK_NAME", string("unknown"));
         string memory filePath = string.concat(

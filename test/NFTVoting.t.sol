@@ -11,7 +11,6 @@ import {GovernanceERC721} from "../src/erc721/GovernanceERC721.sol";
 import {MockGovernanceERC721} from "./mocks/MockGovernanceERC721.sol";
 import {Action} from "@aragon/osx-commons-contracts/src/executors/IExecutor.sol";
 import {INFTVoting} from "../src/base/INFTVoting.sol";
-import {VotingPowerCondition} from "../src/condition/VotingPowerCondition.sol";
 import {IPlugin} from "@aragon/osx-commons-contracts/src/plugin/IPlugin.sol";
 import {IProposal} from "@aragon/osx-commons-contracts/src/plugin/extensions/proposal/IProposal.sol";
 import {IMembership} from "@aragon/osx-commons-contracts/src/plugin/extensions/membership/IMembership.sol";
@@ -27,12 +26,11 @@ contract NFTVotingTest is TestBase {
     DAO dao;
     NFTVoting plugin;
     GovernanceERC721 nft;
-    VotingPowerCondition condition;
 
     /// @dev Builds a DAO + NFTVoting where each entry in `_receivers` gets one NFT.
     function _build(address[] memory _receivers) internal {
         IVotesUpgradeable token_;
-        (dao, plugin, token_, condition) = new NFTDAOBuilder().withNewToken(_receivers).build();
+        (dao, plugin, token_) = new NFTDAOBuilder().withNewToken(_receivers).build();
         nft = GovernanceERC721(address(token_));
     }
 
@@ -129,7 +127,6 @@ contract NFTVotingTest is TestBase {
         vm.roll(block.number + 1);
         vm.warp(block.timestamp + 1);
 
-        dao.grant(address(plugin), alice, plugin.CREATE_PROPOSAL_PERMISSION_ID());
         vm.prank(alice);
         uint256 proposalId = plugin.createProposal("", _dummyActions(), 0, 0, 0, INFTVoting.VoteOption.None, false);
 
@@ -153,8 +150,6 @@ contract NFTVotingTest is TestBase {
         receivers[1] = alice;
         receivers[2] = bob;
         _build(receivers);
-
-        dao.grant(address(plugin), alice, plugin.CREATE_PROPOSAL_PERMISSION_ID());
 
         vm.prank(alice);
         uint256 proposalId = plugin.createProposal("", _dummyActions(), 0, 0, 0, INFTVoting.VoteOption.None, false);
@@ -183,11 +178,10 @@ contract NFTVotingTest is TestBase {
         });
 
         MockGovernanceERC721 emptyToken = new MockGovernanceERC721(IDAO(address(0)), settings);
-        (dao, plugin,, condition) = new NFTDAOBuilder().withToken(IVotesUpgradeable(address(emptyToken))).build();
+        (dao, plugin,) = new NFTDAOBuilder().withToken(IVotesUpgradeable(address(emptyToken))).build();
 
-        dao.grant(address(plugin), alice, plugin.CREATE_PROPOSAL_PERMISSION_ID());
         vm.prank(alice);
-        vm.expectRevert(INFTVoting.NoVotingPower.selector);
+        vm.expectRevert(abi.encodeWithSelector(INFTVoting.ProposalCreationForbidden.selector, alice));
         plugin.createProposal("", _dummyActions(), 0, 0, 0, INFTVoting.VoteOption.None, false);
     }
 
@@ -205,7 +199,6 @@ contract NFTVotingTest is TestBase {
         vm.roll(block.number + 1);
         vm.warp(block.timestamp + 1);
 
-        dao.grant(address(plugin), bob, plugin.CREATE_PROPOSAL_PERMISSION_ID());
         vm.prank(bob);
         uint256 proposalId = plugin.createProposal("", _dummyActions(), 0, 0, 0, INFTVoting.VoteOption.None, false);
 
@@ -256,7 +249,7 @@ contract NFTVotingTest is TestBase {
         token_.mintTo(alice);
         token_.mintTo(bob);
 
-        (dao, plugin,, condition) = new NFTDAOBuilder().withToken(IVotesUpgradeable(address(token_))).build();
+        (dao, plugin,) = new NFTDAOBuilder().withToken(IVotesUpgradeable(address(token_))).build();
 
         assertEq(plugin.totalVotingPower(block.number - 1), 2, "two NFTs delegated");
 
@@ -318,10 +311,9 @@ contract NFTVotingTest is TestBase {
         receivers[2] = bob;
 
         IVotesUpgradeable token_;
-        (dao, plugin, token_, condition) = new NFTDAOBuilder().withEarlyExecution().withNewToken(receivers).build();
+        (dao, plugin, token_) = new NFTDAOBuilder().withEarlyExecution().withNewToken(receivers).build();
         nft = GovernanceERC721(address(token_));
 
-        dao.grant(address(plugin), alice, plugin.CREATE_PROPOSAL_PERMISSION_ID());
         dao.grant(address(plugin), address(this), plugin.EXECUTE_PROPOSAL_PERMISSION_ID());
 
         vm.prank(alice);
@@ -333,10 +325,9 @@ contract NFTVotingTest is TestBase {
 
     function test_WhenVoteReplacementIsEnabled_AVoterCanChangeTheirVote() external {
         IVotesUpgradeable token_;
-        (dao, plugin, token_, condition) = new NFTDAOBuilder().withVoteReplacement().withNewToken(_one(alice)).build();
+        (dao, plugin, token_) = new NFTDAOBuilder().withVoteReplacement().withNewToken(_one(alice)).build();
         nft = GovernanceERC721(address(token_));
 
-        dao.grant(address(plugin), alice, plugin.CREATE_PROPOSAL_PERMISSION_ID());
         vm.prank(alice);
         uint256 proposalId = plugin.createProposal("", _dummyActions(), 0, 0, 0, INFTVoting.VoteOption.Yes, false);
 
@@ -359,10 +350,9 @@ contract NFTVotingTest is TestBase {
         receivers[2] = carol;
 
         IVotesUpgradeable token_;
-        (dao, plugin, token_, condition) = new NFTDAOBuilder().withNewToken(receivers).build();
+        (dao, plugin, token_) = new NFTDAOBuilder().withNewToken(receivers).build();
         nft = GovernanceERC721(address(token_));
 
-        dao.grant(address(plugin), alice, plugin.CREATE_PROPOSAL_PERMISSION_ID());
         dao.grant(address(plugin), address(this), plugin.EXECUTE_PROPOSAL_PERMISSION_ID());
 
         vm.prank(alice);
@@ -389,11 +379,10 @@ contract NFTVotingTest is TestBase {
         receivers[3] = david;
 
         IVotesUpgradeable token_;
-        (dao, plugin, token_, condition) =
+        (dao, plugin, token_) =
             new NFTDAOBuilder().withMinApprovals(uint64(RATIO_BASE)).withNewToken(receivers).build(); // 100% approval
         nft = GovernanceERC721(address(token_));
 
-        dao.grant(address(plugin), alice, plugin.CREATE_PROPOSAL_PERMISSION_ID());
         vm.prank(alice);
         uint256 proposalId = plugin.createProposal("", _dummyActions(), 0, 0, 0, INFTVoting.VoteOption.Yes, false);
         vm.prank(bob);
@@ -445,21 +434,34 @@ contract NFTVotingTest is TestBase {
         plugin.updateVotingSettings(settings);
     }
 
-    function test_WhenMinProposerVotingPowerIsSet_TheConditionGatesProposalCreation() external {
+    function test_WhenMinProposerVotingPowerIsSet_ProposalCreationIsGatedByVotingPower() external {
         IVotesUpgradeable token_;
-        (dao, plugin, token_, condition) =
-            new NFTDAOBuilder().withMinProposerVotingPower(1).withNewToken(_one(alice)).build();
+        (dao, plugin, token_) = new NFTDAOBuilder().withMinProposerVotingPower(1).withNewToken(_one(alice)).build();
         nft = GovernanceERC721(address(token_));
-
-        assertTrue(address(condition) != address(0), "condition deployed when minProposerVotingPower > 0");
 
         // bob has no NFT => cannot create
         vm.prank(bob);
-        vm.expectRevert();
+        vm.expectRevert(abi.encodeWithSelector(INFTVoting.ProposalCreationForbidden.selector, bob));
         plugin.createProposal("", _dummyActions(), 0, 0, 0, INFTVoting.VoteOption.None, false);
 
         // alice holds an NFT => can create
         vm.prank(alice);
         plugin.createProposal("", _dummyActions(), 0, 0, 0, INFTVoting.VoteOption.None, false);
+    }
+
+    function test_CanCreateProposal_ReturnsTrueForEveryoneWhenThresholdIsZero() external {
+        _build(_one(alice));
+
+        assertTrue(plugin.canCreateProposal(alice), "NFT holder can propose");
+        assertTrue(plugin.canCreateProposal(bob), "non-holder can also propose when threshold is 0");
+    }
+
+    function test_CanCreateProposal_ReturnsExpectedValuesWhenThresholdIsSet() external {
+        IVotesUpgradeable token_;
+        (dao, plugin, token_) = new NFTDAOBuilder().withMinProposerVotingPower(1).withNewToken(_one(alice)).build();
+        nft = GovernanceERC721(address(token_));
+
+        assertTrue(plugin.canCreateProposal(alice), "NFT holder meets the threshold");
+        assertFalse(plugin.canCreateProposal(bob), "non-holder does not meet the threshold");
     }
 }

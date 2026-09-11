@@ -416,6 +416,30 @@ contract NFTVoting is INFTVoting, IMembership, MetadataExtensionUpgradeable, Plu
         return votingSettings.minProposerVotingPower;
     }
 
+    /// @notice Returns whether `_account` currently meets the voting-power threshold required to
+    ///     create a proposal.
+    /// @param _account The address to check.
+    /// @return Whether `_account` can call `createProposal`.
+    function canCreateProposal(address _account) public view virtual returns (bool) {
+        uint256 snapshotTimepoint;
+        unchecked {
+            // The time point must be already mined (block) or in the past (timestamp) to
+            // protect against backrunning transactions causing census changes.
+            if (tokenIndexedByTimestamp) {
+                snapshotTimepoint = block.timestamp - 1;
+            } else {
+                snapshotTimepoint = block.number - 1;
+            }
+        }
+
+        uint256 minProposerVotingPower_ = minProposerVotingPower();
+        if (minProposerVotingPower_ == 0) {
+            return true;
+        }
+
+        return votingToken.getPastVotes(_account, snapshotTimepoint) >= minProposerVotingPower_;
+    }
+
     /// @notice Returns the vote mode stored in the voting settings.
     /// @return The vote mode parameter.
     function votingMode() public view virtual returns (VotingMode) {
@@ -556,6 +580,10 @@ contract NFTVoting is INFTVoting, IMembership, MetadataExtensionUpgradeable, Plu
         VoteOption _voteOption,
         bool _tryEarlyExecution
     ) public virtual auth(CREATE_PROPOSAL_PERMISSION_ID) returns (uint256 proposalId) {
+        if (!canCreateProposal(_msgSender())) {
+            revert ProposalCreationForbidden(_msgSender());
+        }
+
         uint256 snapshotTimepoint;
         unchecked {
             // The time point must be already mined (block) or in the past (timestamp) to
