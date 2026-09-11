@@ -1,0 +1,608 @@
+{
+  "meta": {
+    "repo": "/home/nnico/public-sector/dao",
+    "src_dir": "src",
+    "generated_at": "2026-09-11T15:45:16.192657+00:00",
+    "git_head": "fbcdd8d",
+    "git_branch": "main",
+    "total_commits": 176,
+    "total_source_files": 5,
+    "analysis_time_ms": 728
+  },
+  "repo_shape": {
+    "classification": "normal_dev",
+    "total_commits": 176,
+    "source_touching_commits": 39,
+    "bulk_import_sha": null,
+    "date_spread_days": 446,
+    "first_commit_date": "2025-06-11",
+    "last_commit_date": "2026-08-31",
+    "signals": [
+      "Date spread: 446 days",
+      "39 commits touch source files out of 176 total"
+    ]
+  },
+  "fix_candidates": [
+    {
+      "sha": "d1a0635",
+      "full_sha": "d1a06356d9fd0087fe01143025f986ea09230674",
+      "date": "2026-08-28",
+      "author": "NicoSerranoP",
+      "subject": "feat(plugin): use NFTs for unique voting",
+      "score": 12,
+      "reasons": [
+        "feature addition",
+        "rewrites runtime guards (+1/-1)",
+        "loosens access control (+1/-2)",
+        "changes token transfer logic",
+        "changes signature/auth handling",
+        "changes accounting/balance logic",
+        "spans 2 security domains (fund_flows, signatures)",
+        "net code removal",
+        "large change (>500 source lines)",
+        "includes test changes"
+      ],
+      "source_files_touched": [
+        "src/condition/VotingPowerCondition.sol",
+        "src/erc20/GovernanceERC20.sol",
+        "src/erc20/GovernanceWrappedERC20.sol",
+        "src/erc20/IERC20MintableUpgradeable.sol",
+        "src/erc20/IGovernanceWrappedERC20.sol",
+        "src/erc721/GovernanceERC721.sol",
+        "src/erc721/IERC721MintableUpgradeable.sol"
+      ],
+      "test_changed": true,
+      "lines_changed": 527
+    },
+    {
+      "sha": "9ebe8b7",
+      "full_sha": "9ebe8b7037eccf882067feedd07374ef9d8e50bc",
+      "date": "2026-08-12",
+      "author": "NicoSerranoP",
+      "subject": "feat(dao): reduce code",
+      "score": 9,
+      "reasons": [
+        "feature addition",
+        "removes runtime guards (+0/-3)",
+        "changes signature/auth handling",
+        "changes accounting/balance logic",
+        "focused change (3 source files)",
+        "net code removal",
+        "includes test changes"
+      ],
+      "source_files_touched": [
+        "src/TokenVotingSetup.sol",
+        "src/base/IMajorityVoting.sol",
+        "src/base/MajorityVotingBase.sol"
+      ],
+      "test_changed": true,
+      "lines_changed": 404
+    },
+    {
+      "sha": "b6b8c5d",
+      "full_sha": "b6b8c5d1da71bf777f4afa1fc9f1bf0e88cf7cef",
+      "date": "2026-08-07",
+      "author": "NicoSerranoP",
+      "subject": "feat(plugin): simplyfing plugin code",
+      "score": 8,
+      "reasons": [
+        "feature addition",
+        "changes token transfer logic",
+        "changes signature/auth handling",
+        "changes accounting/balance logic",
+        "focused change (1 source files)",
+        "net code removal",
+        "includes test changes"
+      ],
+      "source_files_touched": [
+        "src/TokenVotingSetupZkSync.sol"
+      ],
+      "test_changed": true,
+      "lines_changed": 355
+    },
+    {
+      "sha": "97b8783",
+      "full_sha": "97b8783c93d9a050c59e17c8cd8034150805e680",
+      "date": "2025-06-11",
+      "author": "J\u00f8r\u2202\u00a1",
+      "subject": "Initial commit from osx-plugin-template-foundry",
+      "score": 8,
+      "reasons": [
+        "unclassified",
+        "adds runtime guards (+3/-0)",
+        "tightens access control (+2/-0)",
+        "changes signature/auth handling",
+        "changes accounting/balance logic",
+        "large change (>500 source lines)",
+        "includes test changes"
+      ],
+      "source_files_touched": [
+        "src/MyCloneablePlugin.sol",
+        "src/MyStaticPlugin.sol",
+        "src/MyUpgradeablePlugin.sol",
+        "src/factory/DeploymentFactory.sol",
+        "src/setup/MyPluginSetup.sol"
+      ],
+      "test_changed": true,
+      "lines_changed": 522
+    },
+    {
+      "sha": "60176f3",
+      "full_sha": "60176f309f407f987dd6b73325b78fd25fa21fc2",
+      "date": "2026-08-06",
+      "author": "NicoSerranoP",
+      "subject": "feat(plugin): remove UUPS because install/uninstall does the trick",
+      "score": 7,
+      "reasons": [
+        "feature addition",
+        "loosens access control (+1/-2)",
+        "changes signature/auth handling",
+        "changes accounting/balance logic",
+        "net code removal",
+        "includes test changes"
+      ],
+      "source_files_touched": [
+        "src/TokenVoting.sol",
+        "src/TokenVotingSetup.sol",
+        "src/TokenVotingSetupZkSync.sol",
+        "src/base/MajorityVotingBase.sol"
+      ],
+      "test_changed": true,
+      "lines_changed": 196
+    },
+    {
+      "sha": "d57e8e7",
+      "full_sha": "d57e8e764e26d546651459d9c99f0f95c39fadfd",
+      "date": "2025-07-02",
+      "author": "J\u00f8r\u2202\u00a1",
+      "subject": "Removing the unneeded GovernanceERC20 delegation addresses",
+      "score": 7,
+      "reasons": [
+        "unclassified",
+        "rewrites access control (+1/-1)",
+        "changes accounting/balance logic",
+        "focused change (3 source files)",
+        "net code removal",
+        "includes test changes"
+      ],
+      "source_files_touched": [
+        "src/TokenVotingSetup.sol",
+        "src/TokenVotingSetupZkSync.sol",
+        "src/erc20/GovernanceERC20.sol"
+      ],
+      "test_changed": true,
+      "lines_changed": 50
+    },
+    {
+      "sha": "f65ec93",
+      "full_sha": "f65ec9375259858b3410a44bd4982ce805183cc0",
+      "date": "2025-07-16",
+      "author": "J\u00f8r\u2202\u00a1",
+      "subject": "Fix incorrect gap size",
+      "score": 6,
+      "reasons": [
+        "bug fix",
+        "focused change (1 source files)"
+      ],
+      "source_files_touched": [
+        "src/TokenVoting.sol"
+      ],
+      "test_changed": false,
+      "lines_changed": 2
+    },
+    {
+      "sha": "c9cd299",
+      "full_sha": "c9cd299d29993c140c4834a869b715142277b773",
+      "date": "2025-07-04",
+      "author": "J\u00f8r\u2202\u00a1",
+      "subject": "Enabling self delegation on GovernanceWrappedERC20 when not delegated, regardless of checkpoints",
+      "score": 6,
+      "reasons": [
+        "unclassified",
+        "changes token transfer logic",
+        "changes accounting/balance logic",
+        "focused change (1 source files)",
+        "includes test changes"
+      ],
+      "source_files_touched": [
+        "src/erc20/GovernanceWrappedERC20.sol"
+      ],
+      "test_changed": true,
+      "lines_changed": 4
+    },
+    {
+      "sha": "c42dbee",
+      "full_sha": "c42dbeedbe6e370d65cd5692a4714139b81f5dcc",
+      "date": "2025-06-30",
+      "author": "J\u00f8r\u2202\u00a1",
+      "subject": "Replicating the tests to the ZkSync plugin setup",
+      "score": 6,
+      "reasons": [
+        "unclassified",
+        "changes signature/auth handling",
+        "focused change (1 source files)",
+        "net code removal",
+        "includes test changes"
+      ],
+      "source_files_touched": [
+        "src/TokenVotingSetupZkSync.sol"
+      ],
+      "test_changed": true,
+      "lines_changed": 1
+    },
+    {
+      "sha": "b678274",
+      "full_sha": "b678274a9af585853fecbe3ad90d711077b190ea",
+      "date": "2026-08-31",
+      "author": "NicoSerranoP",
+      "subject": "feat(token): use base URI",
+      "score": 5,
+      "reasons": [
+        "feature addition",
+        "spans 4 security domains (access_control, fund_flows, signatures, state_machines)",
+        "focused change (2 source files)",
+        "includes test changes"
+      ],
+      "source_files_touched": [
+        "src/NFTVoting.sol",
+        "src/erc721/GovernanceERC721.sol"
+      ],
+      "test_changed": true,
+      "lines_changed": 65
+    }
+  ],
+  "dangerous_area_changes": {
+    "access_control": {
+      "commit_count": 1,
+      "files": [
+        "src/NFTVoting.sol"
+      ],
+      "commits": [
+        {
+          "sha": "b678274",
+          "date": "2026-08-31",
+          "subject": "feat(token): use base URI"
+        }
+      ]
+    },
+    "fund_flows": {
+      "commit_count": 2,
+      "files": [
+        "src/NFTVoting.sol",
+        "src/erc721/GovernanceERC721.sol"
+      ],
+      "commits": [
+        {
+          "sha": "b678274",
+          "date": "2026-08-31",
+          "subject": "feat(token): use base URI"
+        },
+        {
+          "sha": "d1a0635",
+          "date": "2026-08-28",
+          "subject": "feat(plugin): use NFTs for unique voting"
+        }
+      ]
+    },
+    "signatures": {
+      "commit_count": 2,
+      "files": [
+        "src/erc721/GovernanceERC721.sol"
+      ],
+      "commits": [
+        {
+          "sha": "b678274",
+          "date": "2026-08-31",
+          "subject": "feat(token): use base URI"
+        },
+        {
+          "sha": "d1a0635",
+          "date": "2026-08-28",
+          "subject": "feat(plugin): use NFTs for unique voting"
+        }
+      ]
+    },
+    "state_machines": {
+      "commit_count": 1,
+      "files": [
+        "src/NFTVoting.sol"
+      ],
+      "commits": [
+        {
+          "sha": "b678274",
+          "date": "2026-08-31",
+          "subject": "feat(token): use base URI"
+        }
+      ]
+    }
+  },
+  "late_changes": {
+    "window_days": 30,
+    "cutoff_date": "2026-08-01",
+    "latest_commit_date": "2026-08-31",
+    "late_commits": [
+      {
+        "sha": "b678274",
+        "date": "2026-08-31",
+        "author": "NicoSerranoP",
+        "subject": "feat(token): use base URI",
+        "source_files": [
+          "src/NFTVoting.sol",
+          "src/erc721/GovernanceERC721.sol"
+        ],
+        "test_changed": true,
+        "lines_changed": 65
+      },
+      {
+        "sha": "d1a0635",
+        "date": "2026-08-28",
+        "author": "NicoSerranoP",
+        "subject": "feat(plugin): use NFTs for unique voting",
+        "source_files": [
+          "src/condition/VotingPowerCondition.sol",
+          "src/erc20/GovernanceERC20.sol",
+          "src/erc20/GovernanceWrappedERC20.sol",
+          "src/erc20/IERC20MintableUpgradeable.sol",
+          "src/erc20/IGovernanceWrappedERC20.sol",
+          "src/erc721/GovernanceERC721.sol",
+          "src/erc721/IERC721MintableUpgradeable.sol"
+        ],
+        "test_changed": true,
+        "lines_changed": 527
+      },
+      {
+        "sha": "d29e468",
+        "date": "2026-08-27",
+        "author": "NicoSerranoP",
+        "subject": "chore(plugin): remove excudled accounts",
+        "source_files": [
+          "src/TokenVoting.sol"
+        ],
+        "test_changed": true,
+        "lines_changed": 34
+      },
+      {
+        "sha": "bcae63e",
+        "date": "2026-08-17",
+        "author": "NicoSerranoP",
+        "subject": "feat(contracts): merged into single plugin contract",
+        "source_files": [
+          "src/TokenVoting.sol",
+          "src/base/MajorityVotingBase.sol"
+        ],
+        "test_changed": true,
+        "lines_changed": 1312
+      },
+      {
+        "sha": "cfca664",
+        "date": "2026-08-13",
+        "author": "NicoSerranoP",
+        "subject": "feat(base): move all structs, events and errors to interface",
+        "source_files": [
+          "src/base/IMajorityVoting.sol",
+          "src/base/MajorityVotingBase.sol"
+        ],
+        "test_changed": true,
+        "lines_changed": 247
+      },
+      {
+        "sha": "9ebe8b7",
+        "date": "2026-08-12",
+        "author": "NicoSerranoP",
+        "subject": "feat(dao): reduce code",
+        "source_files": [
+          "src/TokenVotingSetup.sol",
+          "src/base/IMajorityVoting.sol",
+          "src/base/MajorityVotingBase.sol"
+        ],
+        "test_changed": true,
+        "lines_changed": 404
+      },
+      {
+        "sha": "3f0b64e",
+        "date": "2026-08-07",
+        "author": "NicoSerranoP",
+        "subject": "chore(base): use modifier to simplify",
+        "source_files": [
+          "src/base/MajorityVotingBase.sol"
+        ],
+        "test_changed": false,
+        "lines_changed": 40
+      },
+      {
+        "sha": "b6b8c5d",
+        "date": "2026-08-07",
+        "author": "NicoSerranoP",
+        "subject": "feat(plugin): simplyfing plugin code",
+        "source_files": [
+          "src/TokenVotingSetupZkSync.sol"
+        ],
+        "test_changed": true,
+        "lines_changed": 355
+      },
+      {
+        "sha": "60176f3",
+        "date": "2026-08-06",
+        "author": "NicoSerranoP",
+        "subject": "feat(plugin): remove UUPS because install/uninstall does the trick",
+        "source_files": [
+          "src/TokenVoting.sol",
+          "src/TokenVotingSetup.sol",
+          "src/TokenVotingSetupZkSync.sol",
+          "src/base/MajorityVotingBase.sol"
+        ],
+        "test_changed": true,
+        "lines_changed": 196
+      }
+    ],
+    "source_without_test_count": 1,
+    "total_late_source_commits": 9
+  },
+  "forked_deps": {
+    "detected_libs": [
+      {
+        "name": "ens-contracts",
+        "path": "lib/ens-contracts",
+        "known_upstream": null,
+        "is_submodule": true,
+        "is_internalized": false,
+        "sol_file_count": 109,
+        "pragma_versions": [
+          ">=0.8.17 <0.9.0",
+          ">=0.8.4",
+          "^0.8.0",
+          "^0.8.11",
+          "^0.8.13",
+          "^0.8.4",
+          "~0.8.17"
+        ],
+        "notes": []
+      },
+      {
+        "name": "openzeppelin-contracts",
+        "path": "lib/openzeppelin-contracts",
+        "known_upstream": "OpenZeppelin",
+        "is_submodule": true,
+        "is_internalized": false,
+        "sol_file_count": 324,
+        "pragma_versions": [
+          ">0.5.0 <0.9.0",
+          ">=0.4.21 <0.9.0",
+          ">=0.4.22 <0.9.0",
+          ">=0.5.0",
+          ">=0.6.0 <0.9.0",
+          ">=0.6.2",
+          ">=0.6.2 <0.9.0",
+          ">=0.6.9 <0.9.0",
+          ">=0.7.0 <0.9.0",
+          ">=0.8.0 <0.9.0",
+          "^0.8.0",
+          "^0.8.1",
+          "^0.8.19",
+          "^0.8.2",
+          "^0.8.4",
+          "^0.8.8",
+          "^0.8.9"
+        ],
+        "notes": [
+          "Pragma '>0.5.0 <0.9.0' differs from expected upstream versions",
+          "Pragma '>=0.4.21 <0.9.0' differs from expected upstream versions",
+          "Pragma '>=0.4.22 <0.9.0' differs from expected upstream versions",
+          "Pragma '>=0.5.0' differs from expected upstream versions",
+          "Pragma '>=0.6.0 <0.9.0' differs from expected upstream versions",
+          "Pragma '>=0.6.2' differs from expected upstream versions",
+          "Pragma '>=0.6.2 <0.9.0' differs from expected upstream versions",
+          "Pragma '>=0.6.9 <0.9.0' differs from expected upstream versions",
+          "Pragma '>=0.7.0 <0.9.0' differs from expected upstream versions"
+        ]
+      },
+      {
+        "name": "openzeppelin-contracts-upgradeable",
+        "path": "lib/openzeppelin-contracts-upgradeable",
+        "known_upstream": "OpenZeppelin",
+        "is_submodule": true,
+        "is_internalized": false,
+        "sol_file_count": 320,
+        "pragma_versions": [
+          ">0.5.0 <0.9.0",
+          ">=0.4.21 <0.9.0",
+          ">=0.4.22 <0.9.0",
+          ">=0.5.0",
+          ">=0.6.0 <0.9.0",
+          ">=0.6.2",
+          ">=0.6.2 <0.9.0",
+          ">=0.6.9 <0.9.0",
+          ">=0.7 <0.9",
+          ">=0.7.0 <0.9.0",
+          ">=0.8.0 <0.9.0",
+          "^0.8.0",
+          "^0.8.1",
+          "^0.8.19",
+          "^0.8.2",
+          "^0.8.4",
+          "^0.8.8",
+          "^0.8.9"
+        ],
+        "notes": [
+          "Pragma '>0.5.0 <0.9.0' differs from expected upstream versions",
+          "Pragma '>=0.4.21 <0.9.0' differs from expected upstream versions",
+          "Pragma '>=0.4.22 <0.9.0' differs from expected upstream versions",
+          "Pragma '>=0.5.0' differs from expected upstream versions",
+          "Pragma '>=0.6.0 <0.9.0' differs from expected upstream versions",
+          "Pragma '>=0.6.2' differs from expected upstream versions",
+          "Pragma '>=0.6.2 <0.9.0' differs from expected upstream versions",
+          "Pragma '>=0.6.9 <0.9.0' differs from expected upstream versions",
+          "Pragma '>=0.7 <0.9' differs from expected upstream versions",
+          "Pragma '>=0.7.0 <0.9.0' differs from expected upstream versions"
+        ]
+      },
+      {
+        "name": "osx",
+        "path": "lib/osx",
+        "known_upstream": null,
+        "is_submodule": true,
+        "is_internalized": false,
+        "sol_file_count": 35,
+        "pragma_versions": [
+          "^0.8.8"
+        ],
+        "notes": []
+      },
+      {
+        "name": "osx-commons",
+        "path": "lib/osx-commons",
+        "known_upstream": null,
+        "is_submodule": true,
+        "is_internalized": false,
+        "sol_file_count": 61,
+        "pragma_versions": [
+          "^0.8.8"
+        ],
+        "notes": []
+      }
+    ],
+    "removed_submodules": [
+      {
+        "path": "lib/plugin-version-1.3",
+        "removed_in_sha": "b6b8c5d",
+        "subject": "feat(plugin): simplyfing plugin code"
+      },
+      {
+        "path": "lib/plugin-version-1.1",
+        "removed_in_sha": "7494c82",
+        "subject": "Stop using subrepo's as a dependency since the strict solc compiler"
+      },
+      {
+        "path": "lib/plugin-version-1.2",
+        "removed_in_sha": "7494c82",
+        "subject": "Stop using subrepo's as a dependency since the strict solc compiler"
+      }
+    ]
+  },
+  "tech_debt": {
+    "total_count": 0,
+    "items": [],
+    "files_with_debt": 0,
+    "capped": false
+  },
+  "dev_patterns": {
+    "test_co_change_rate": 0.59,
+    "fix_without_test_rate": 0.1,
+    "avg_commit_size": 214.9,
+    "avg_commit_size_note": null,
+    "single_developer_pct": 0.788,
+    "top_contributor": "J\u00f8r\u2202\u00a1",
+    "contributor_breakdown": [
+      {
+        "author": "J\u00f8r\u2202\u00a1",
+        "lines_added": 3839,
+        "pct": 0.788
+      },
+      {
+        "author": "NicoSerranoP",
+        "lines_added": 1032,
+        "pct": 0.212
+      }
+    ]
+  }
+}

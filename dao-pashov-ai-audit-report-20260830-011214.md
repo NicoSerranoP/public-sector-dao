@@ -1,0 +1,175 @@
+# 🔐 Security Review — NFTVoting Plugin
+
+---
+
+## Scope
+
+|                                  |                                                        |
+| -------------------------------- | ------------------------------------------------------ |
+| **Mode**                         | ALL (`src/**`, excluding interfaces / lib / mocks / test) |
+| **Files reviewed**               | `src/NFTVoting.sol` · `src/erc721/GovernanceERC721.sol` · `src/condition/VotingPowerCondition.sol` |
+| **Confidence threshold (1-100)** | 70                                                     |
+
+12 attacker agents (math-precision, access-control, economic-security, execution-trace, invariant, periphery, first-principles, asymmetry, boundary, numerical-gap, trust-gap, flow-gap) scanned the bundle in parallel; results deduplicated and gate-evaluated.
+
+Completeness: 14 unique (Contract, function) in raw agent output, 14 covered in final.
+
+---
+
+## Findings
+
+[75] **1. `ProposalCreated` is emitted after the creator's auto-vote and possible early execution**
+
+`NFTVoting.createProposal` · Confidence: 75
+
+**Description**
+When `createProposal` is called with `_voteOption != None`, it runs `vote(proposalId, …)` (which emits `VoteCast`, and on `_tryEarlyExecution` reaches `_execute` → `ProposalExecuted` plus every action side-effect event) *before* `_emitProposalCreatedEvent`, so a proposal's `VoteCast` / `ProposalExecuted` logs can precede its `ProposalCreated`; upstream Aragon `TokenVoting` emits `ProposalCreated` first, and indexers (the Aragon subgraph) that build the proposal entity in the `ProposalCreated` handler will `load()` a null entity for the earlier logs and silently drop the initial vote / executed flag, leaving the DAO UI showing an executed proposal as still open. Flagged by 3 independent agents.
+
+**Fix**
+
+```diff
+         for (uint256 i; i < _actions.length;) {
+             proposal_.actions.push(_actions[i]);
+             unchecked {
+                 ++i;
+             }
+         }
+
++        _emitProposalCreatedEvent(_metadata, _actions, _allowFailureMap, proposalId, _startDate, _endDate);
++
+         if (_voteOption != VoteOption.None) {
+             vote(proposalId, _voteOption, _tryEarlyExecution);
+         }
+-
+-        _emitProposalCreatedEvent(_metadata, _actions, _allowFailureMap, proposalId, _startDate, _endDate);
+     }
+```
+---
+
+[72] **2. `_detectTokenClock` exact-match detection bricks installation or silently misclassifies the clock**
+
+`NFTVoting._detectTokenClock` · Confidence: 72
+
+**Description**
+Clock-mode detection requires `keccak256(CLOCK_MODE()) == keccak256("mode=timestamp")` *exactly* and `clock() == block.timestamp` *exactly*, with both probes swallowed by empty `catch {}`; a valid ERC-6372 timestamp token that returns a non-canonical mode string (e.g. `"mode=timestamp&from=default"`, mirroring EIP-6372's own `"mode=blocknumber&from=default"`) or that implements only one of the two ERC-6372 methods produces `clockModeTimestamp != clockTimestamp` and permanently reverts `initialize` with `TokenClockMismatch()`, while a timestamp token implementing neither method is silently assumed block-number mode and later bricks every `createProposal` with `NoVotingPower()` (the `block.number - 1` snapshot is read by the token as a ~1970 timestamp). Deployment-time DoS only — no fund path — but flagged by 6 independent agents.
+
+**Fix**
+
+```diff
+-        try IERC6372Upgradeable(address(votingToken)).CLOCK_MODE() returns (string memory clockMode) {
+-            clockModeTimestamp = keccak256(bytes(clockMode)) == keccak256(bytes("mode=timestamp"));
+-        } catch {}
+-        try IERC6372Upgradeable(address(votingToken)).clock() returns (uint48 timePoint) {
+-            clockTimestamp = (timePoint == block.timestamp);
+-        } catch {}
+-
+-        if (clockModeTimestamp != clockTimestamp) {
+-            revert TokenClockMismatch();
+-        } else if (clockModeTimestamp) {
+-            tokenIndexedByTimestamp = true;
+-        } else {
+-            tokenIndexedByTimestamp = false;
+-        }
++        // CLOCK_MODE() is the ERC-6372 source of truth; parse the `mode=` field only.
++        try IERC6372Upgradeable(address(votingToken)).CLOCK_MODE() returns (string memory clockMode) {
++            bytes32 mode = keccak256(bytes(_beforeAmp(clockMode))); // strip any "&from=..." suffix
++            if (mode == keccak256("mode=timestamp")) {
++                tokenIndexedByTimestamp = true;
++            } else if (mode == keccak256("mode=blocknumber")) {
++                tokenIndexedByTimestamp = false;
++            } else {
++                revert TokenClockMismatch();
++            }
++        } catch {
++            tokenIndexedByTimestamp = false; // no ERC-6372 => assume block number per EIP default
++        }
+```
+---
+
+[70] **3. `VotingPowerCondition` caches the voting token from a possibly-uninitialized plugin with no zero-check**
+
+`VotingPowerCondition.constructor` · Confidence: 70
+
+**Description**
+The constructor stores `VOTING_TOKEN = PLUGIN.getVotingToken()` into an `immutable` with no validation; `NFTVoting.getVotingToken()` returns `address(0)` until the plugin clone runs `initialize()`, so any deployment/`PluginSetup` flow that constructs the condition before initializing the plugin permanently freezes `VOTING_TOKEN` at `address(0)`, and every `isGranted` call with `minProposerVotingPower != 0` then reverts on `IVotesUpgradeable(address(0)).getPastVotes(...)`, bricking all proposal creation with no recovery (the field is immutable, the plugin has no token setter). The in-repo `InstallNFTVoting.s.sol` initializes the plugin first so it is safe, but the production `PluginSetup` path is out of scope and unverified. Flagged by 5 independent agents.
+
+**Fix**
+
+```diff
+     constructor(address _plugin) {
+         PLUGIN = NFTVoting(_plugin);
+         VOTING_TOKEN = PLUGIN.getVotingToken();
++        require(address(VOTING_TOKEN) != address(0), "plugin not initialized");
+     }
+```
+---
+
+[64] **4. Auto self-delegation was widened from mint to every inbound transfer**
+
+`GovernanceERC721._afterTokenTransfer` · Confidence: 64
+
+**Description**
+Canonical Aragon guards the `_delegate(to, to)` convenience with a mint-only condition (`from == address(0)` / `numCheckpoints(to) == 0`); this fork guards it only with `to != address(0) && delegates(to) == address(0)`, so every `transferFrom` / `safeTransferFrom` / `adminTransfer` into an address with no delegate (exchange hot wallet, marketplace escrow, bridge, multisig) silently enrolls that recipient as an active voter, and a holder who deliberately opted out with `delegate(address(0))` is re-opted-in on their next inbound transfer without consent. No tally-integrity or fund impact (the proposal snapshot is always `block.number - 1`, so post-creation transfers cannot move a live vote), but it is an unreviewed behavior change from upstream and it also re-fires a storage-heavy `_delegate` on every subsequent transfer while `delegates(to) == 0`.
+
+---
+
+[60] **5. `minProposerVotingPower` has no in-contract enforcement and no upper bound**
+
+`NFTVoting.createProposal` / `NFTVoting._updateVotingSettings` · Confidence: 60
+
+**Description**
+`createProposal` enforces only `auth(CREATE_PROPOSAL_PERMISSION_ID)` and `totalVotingPower_ != 0`; the proposer-stake requirement lives entirely in the external `VotingPowerCondition`, which is effective only if `CREATE_PROPOSAL_PERMISSION_ID` is granted with `grantWithCondition` — a single setup-wiring mistake (plain `grant`, or `grant` to `ANY_ADDR`) silently makes proposal creation fully permissionless regardless of the configured `minProposerVotingPower`. Conversely, `_updateVotingSettings` puts no upper bound on `minProposerVotingPower`, so a passing settings proposal that sets it above total supply permanently and irreversibly disables all proposal creation (recovery needs a proposal that can no longer be created). Flagged by 4 agents.
+
+---
+
+[58] **6. `isSupportThresholdReachedEarly` subtraction can underflow with a non-standard voting token**
+
+`NFTVoting.isSupportThresholdReachedEarly` · Confidence: 58
+
+**Description**
+`noVotesWorstCase = totalVotingPower(snapshot) - tally.yes - tally.abstain` is checked arithmetic that assumes the OpenZeppelin invariant `Σ getPastVotes(account, t) <= getPastTotalSupply(t)`; `initialize` only verifies `supportsInterface(IERC721)` and never constrains the token to a standard `Votes` implementation, so a token whose vote-history sum can exceed its supply-history makes this line revert, permanently disabling early execution and `hasSucceeded()` / `canExecute()` while a proposal is open. The in-scope `GovernanceERC721` upholds the invariant, so no live exploit — the exposure is entirely in the trusted-token assumption. Flagged by 3 agents.
+
+---
+
+Findings List
+
+| # | Confidence | Title |
+|---|---|---|
+| 1 | [75] | `ProposalCreated` emitted after the creator's auto-vote / early execution |
+| 2 | [72] | `_detectTokenClock` exact-match detection bricks install or misclassifies clock |
+| 3 | [70] | `VotingPowerCondition` caches voting token from possibly-uninitialized plugin, no zero-check |
+| 4 | [64] | Auto self-delegation widened from mint to every inbound transfer |
+| 5 | [60] | `minProposerVotingPower` unenforced in-contract and unbounded |
+| 6 | [58] | `isSupportThresholdReachedEarly` underflows with a non-standard voting token |
+
+---
+
+## Leads
+
+_Vulnerability trails with concrete code smells where the full exploit path could not be completed in one analysis pass. These are not false positives — they are high-signal leads for manual review. Not scored._
+
+- **Borrowed-majority governance: no voting delay + early execution inside `createProposal`** — `NFTVoting.createProposal` / `_vote` — Code smells: `_validateProposalDates` sets `startDate = block.timestamp` (no delay), `_vote` runs `_execute` in the same tx on `_tryEarlyExecution`, and the reference install grants both `CREATE_PROPOSAL_PERMISSION` and `EXECUTE_PROPOSAL_PERMISSION` to `ANY_ADDR`. An actor able to borrow a voting-NFT majority across a single block boundary can, at block K+1, `createProposal(evilActions, …, Yes, tryEarlyExecution=true)` against snapshot K and execute arbitrary DAO actions in one transaction, then return the NFTs. The `block.number - 1` snapshot blocks the atomic flash-loan version, and this fork's transfer-time auto self-delegation (Finding 4) only removes the borrower's need for a separate `delegate()` tx — but the combination collapses a takeover from "hold a majority" to "borrow a majority for one block". Unverified: whether an NFT lending market with that depth exists for a given governance collection; also inherent to any `block.number - 1` snapshot governance without a timelock.
+
+- **`initialize` validates only ERC-165 `IERC721`, not `IVotes` / `IERC6372`** — `NFTVoting.initialize` — Code smells: the entire tally engine (`getPastVotes`, `getPastTotalSupply`) and clock detection (`CLOCK_MODE` / `clock`) run against a token proven only to be an ERC-721. A valid-ERC-721-but-not-Votes token installs cleanly and then reverts every `createProposal` / `vote` on the missing methods — a self-inflicted deployment-time DoS that surfaces late instead of at install.
+
+- **Deterministic proposal id with per-block-only dedup → parameter / `allowFailureMap` substitution and griefing** — `NFTVoting.createProposal` — Code smells: `proposalId = _createProposalId(keccak256(abi.encode(_actions, _metadata)))` where `_createProposalId` mixes in `block.number` but not the creator or a nonce, and `createProposal` reverts `ProposalAlreadyExists` on a same-block collision. An account with `CREATE_PROPOSAL_PERMISSION` (i.e. anyone, in the reference install) that sees a pending `createProposal` can land its own call first in the same block with identical `_actions` + `_metadata` but attacker-chosen `_startDate` / `_endDate` / `_allowFailureMap` / initial `_voteOption`, forcing the victim's tx to revert and dictating the live proposal's parameters — most damagingly a non-zero `_allowFailureMap` that lets individual actions fail silently while the proposal still executes. The victim can recreate in a later block. Behavior is inherited from upstream `ProposalUpgradeable`. Flagged by 4 agents.
+
+- **`_validateProposalDates` has no `endDate` upper bound → permanently-pending proposals** — `NFTVoting._validateProposalDates` — Code smells: only `endDate >= startDate + minDuration` is enforced (plus uint64 overflow). A Standard / VoteReplacement proposal created with `_endDate` decades out is un-executable (`_canExecute` bars execution while `_isProposalOpen`) and never expires, holding its `(chainid, block.number, plugin, keccak(actions,metadata))` id and an open tally. Recovery exists (recreate in a later block), so this is a footgun / weak griefing vector. Flagged by 2 agents.
+
+- **Early-execution permission check in `_vote` passes different calldata to conditions than `execute()`** — `NFTVoting._vote` vs `NFTVoting.execute` — Code smells: `execute()` gates on `auth(EXECUTE_PROPOSAL_PERMISSION_ID)` (calldata `execute(uint256)`, sender via `_msgSender()` / trusted forwarder); the early-execution branch in `_vote` instead calls `dao().hasPermission(address(this), _voter, EXECUTE_PROPOSAL_PERMISSION_ID, _msgData())` with a raw `_voter` and `vote(...)` / `createProposal(...)` calldata. A calldata-inspecting permission condition on the execute permission would see different inputs on the two entrypoints. Fails safe (a mismatched condition blocks early execution, never opens it) and no such condition ships in the reference install. Flagged by 2 agents.
+
+- **`VotingPowerCondition.isGranted` ignores `_where` and `_permissionId`** — `VotingPowerCondition.isGranted` — Code smells: `(_where, _data, _permissionId);` is a no-op; the proposer-power test is applied unconditionally. Safe only because the reference install binds one instance to exactly one permission at one `_where`; reusing an instance across permissions/plugins would apply the proposer gate to unrelated actions. Fix: assert `_where == address(PLUGIN)` and `_permissionId == PLUGIN.CREATE_PROPOSAL_PERMISSION_ID()`.
+
+- **`VotingPowerCondition` gates on `getPastVotes` only, dropping upstream's balance fallback** — `VotingPowerCondition.isGranted` — Code smells: upstream Aragon gates on `getVotes(_who) >= min || token.balanceOf(_who) >= min` (current power, with a raw-balance fallback); this fork gates only on `getPastVotes(_who, block.number - 1) >= min`. A holder with `>= min` tokens who has never delegated (`getPastVotes == 0`) is denied proposal rights despite qualifying by balance, and eligibility shifts by one block around transfers. Largely masked for `GovernanceERC721` by auto self-delegation, but an unreviewed semantic change to the permission gate.
+
+- **Ceiled ratio math makes effective participation / approval materially stricter than configured for small NFT electorates** — `NFTVoting.createProposal` / `isMinParticipationReached` / `isMinApprovalReached` — Code smells: `minVotingPower = _applyRatioCeiled(totalVotingPower_, minParticipation())` and `minApprovalPower = _applyRatioCeiled(totalVotingPower_, minApproval())` with `totalVotingPower_` a tiny NFT count. e.g. `total = 3`, `minParticipation = 500000` (nominal 50%) → required participation `= ceil(1.5) = 2` ≈ 67%. Rounding is always toward stricter and stays `<= totalVotingPower_`, so proposals remain passable at full turnout — a governance-UX hazard, not a value bug. Flagged by 2 agents.
+
+- **`hasSucceeded()` is non-monotonic and returns `true` for still-open Standard-mode proposals** — `NFTVoting.hasSucceeded` / `_hasSucceeded` — Code smells: `_hasSucceeded(id, _isOpen = true)` returns `true` for an open Standard-mode proposal once the *early* support test + participation + approval pass; the "wait until endDate" rule for Standard mode lives only in `_canExecute`, not in `_hasSucceeded`. Voters can still add NO votes until `endDate`, so the public `IProposal.hasSucceeded` view can flip `true → false`. On-chain execution through this contract is safe; the risk is an external consumer (staged-proposal processor / automation) that treats `hasSucceeded` as terminal.
+
+- **`GovernanceERC721.initialize` is `public` with no `_disableInitializers()`** — `GovernanceERC721.initialize` — Code smells: the contract inherits OZ `Initializable` and never calls `_disableInitializers()`; the real constructor calls `initialize` instead. In the shipped `new`-deployment path this is safe (the constructor atomically consumes the initializer and later external calls revert), but if the contract is ever used as a minimal-proxy / ERC-1967 implementation base, a fresh clone has `_initialized == 0` and anyone can call `initialize` to set themselves as the managing DAO and mint the full NFT supply. Fix: add `constructor() { _disableInitializers(); }` on the upgradeable base, or make `initialize` `external` and document new-only deployment.
+
+- **`snapshotTimepoint == 0` sentinel collision at genesis** — `NFTVoting.createProposal` / `_proposalExists` — Code smells: `snapshotTimepoint = block.number - 1` / `block.timestamp - 1` in an `unchecked` block, and `_proposalExists` / the `ProposalAlreadyExists` guard key off `snapshotTimepoint != 0`. At chain height 1 / unix time 1 a validly created proposal is stored with `snapshotTimepoint == 0` and reads as non-existent, bypassing the duplicate guard. Unreachable on any production chain; noted for calibration.
+
+---
+
+> ⚠️ This review was performed by an AI assistant. AI analysis can never verify the complete absence of vulnerabilities and no guarantee of security is given. Team security reviews, bug bounty programs, and on-chain monitoring are strongly recommended. For a consultation regarding your projects' security, visit [https://www.pashov.com](https://www.pashov.com)

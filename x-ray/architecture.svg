@@ -1,0 +1,108 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1374" height="490" viewBox="0 0 550 196" font-family="Arial, sans-serif">
+  <defs>
+    <marker id="ah" viewBox="0 0 8 6" refX="8" refY="3"
+      markerWidth="4" markerHeight="3" orient="auto">
+      <path d="M0.5,0.5 L7,3 L0.5,5.5" fill="none" stroke="#94A3B8"
+        stroke-width="1.2" stroke-linejoin="round" stroke-linecap="round"/>
+    </marker>
+    <filter id="shadow" x="-6%" y="-8%" width="112%" height="128%">
+      <feDropShadow dx="0" dy="0.5" stdDeviation="0.8"
+        flood-color="#000" flood-opacity="0.05"/>
+    </filter>
+  </defs>
+  <rect width="550" height="196" fill="#F8F9FB" rx="3"/>
+  <text x="275" y="11" text-anchor="middle" font-size="6" font-weight="700" fill="#1E293B">NFTVoting Plugin Architecture</text>
+  <rect x="200" y="16" width="150" height="10" rx="3" fill="#fff" stroke="#E2E5EA" stroke-width="0.4"/>
+  <rect x="205" y="18.5" width="5" height="5" rx="2.5" fill="#fff" stroke="#E2E5EA" stroke-width="0.4"/>
+  <text x="213" y="22.5" font-size="3.5" fill="#1E293B">Actor</text>
+  <rect x="245" y="18.5" width="5" height="5" rx="1.5" fill="#fff" stroke="#E2E5EA" stroke-width="0.4"/>
+  <rect x="246" y="19.5" width="0.8" height="3" rx="0.4" fill="#3B82F6"/>
+  <text x="253" y="22.5" font-size="3.5" fill="#1E293B">Protocol</text>
+  <rect x="293" y="18.5" width="5" height="5" rx="1.5" fill="#fff" stroke="#E2E5EA" stroke-width="0.4"/>
+  <rect x="294" y="19.5" width="0.8" height="3" rx="0.4" fill="#F59E0B"/>
+  <text x="301" y="22.5" font-size="3.5" fill="#1E293B">External</text>
+  <rect x="20.0" y="84.0" width="347.7" height="102.0" rx="5" fill="#EDEEF2"/>
+  <text x="364.7" y="89.0" text-anchor="end" font-size="3.5" fill="#94A3B8" font-weight="500">In-scope plugin</text>
+  <path d="M278.2,46.0 C278.2,70.0 309.9,70.0 309.9,94.0" fill="none" stroke="#94A3B8" stroke-width="0.5" marker-end="url(#ah)"/>
+  <path d="M390.4,46.0 C390.4,70.0 309.9,70.0 309.9,94.0" fill="none" stroke="#94A3B8" stroke-width="0.5" marker-end="url(#ah)"/>
+  <path d="M490.0,46.0 C490.0,70.0 309.9,70.0 309.9,94.0" fill="none" stroke="#94A3B8" stroke-width="0.5" marker-end="url(#ah)"/>
+  <path d="M173.2,46.0 C173.2,70.0 309.9,70.0 309.9,94.0" fill="none" stroke="#94A3B8" stroke-width="0.5" marker-end="url(#ah)"/>
+  <path d="M309.9,94.0 C309.9,70.0 173.2,70.0 173.2,46.0" fill="none" stroke="#94A3B8" stroke-width="0.5" marker-end="url(#ah)"/>
+  <path d="M173.2,46.0 C173.2,70.0 191.7,70.0 191.7,94.0" fill="none" stroke="#94A3B8" stroke-width="0.5" marker-end="url(#ah)"/>
+  <path d="M262.1,112.0 C255.5,126.0 246.7,126.0 240.1,114.0" fill="none" stroke="#94A3B8" stroke-width="0.5" marker-end="url(#ah)"/>
+  <path d="M88.0,156.0 C88.0,135.0 309.9,135.0 309.9,114.0" fill="none" stroke="#94A3B8" stroke-width="0.5" marker-end="url(#ah)"/>
+  <path d="M88.0,156.0 C88.0,135.0 191.7,135.0 191.7,114.0" fill="none" stroke="#94A3B8" stroke-width="0.5" marker-end="url(#ah)"/>
+  <path d="M309.9,114.0 C309.9,135.0 407.2,135.0 407.2,156.0" fill="none" stroke="#94A3B8" stroke-width="0.5" marker-end="url(#ah)"/>
+  <path d="M191.7,114.0 C191.7,135.0 407.2,135.0 407.2,156.0" fill="none" stroke="#94A3B8" stroke-width="0.5" marker-end="url(#ah)"/>
+  <path d="M191.7,114.0 C191.7,135.0 232.0,135.0 232.0,156.0" fill="none" stroke="#94A3B8" stroke-width="0.5" marker-end="url(#ah)"/>
+  <g filter="url(#shadow)">
+    <rect x="132.6" y="32.0" width="81.2" height="14" rx="7" fill="#fff" stroke="#E2E5EA" stroke-width="0.5"/>
+    <text x="173.2" y="40.8" text-anchor="middle" font-size="4.8" font-weight="600" fill="#1E293B">Aragon DAO</text>
+  </g>
+  <g filter="url(#shadow)">
+    <rect x="235.8" y="32.0" width="84.8" height="14" rx="7" fill="#fff" stroke="#E2E5EA" stroke-width="0.5"/>
+    <text x="278.2" y="40.8" text-anchor="middle" font-size="4.8" font-weight="600" fill="#1E293B">Proposer</text>
+  </g>
+  <g filter="url(#shadow)">
+    <rect x="342.6" y="32.0" width="95.6" height="14" rx="7" fill="#fff" stroke="#E2E5EA" stroke-width="0.5"/>
+    <text x="390.4" y="40.8" text-anchor="middle" font-size="4.8" font-weight="600" fill="#1E293B">Voter</text>
+  </g>
+  <g filter="url(#shadow)">
+    <rect x="460.2" y="32.0" width="59.6" height="14" rx="7" fill="#fff" stroke="#E2E5EA" stroke-width="0.5"/>
+    <text x="490.0" y="40.8" text-anchor="middle" font-size="4.8" font-weight="600" fill="#1E293B">Executor</text>
+  </g>
+  <g filter="url(#shadow)">
+    <rect x="262.1" y="94.0" width="95.6" height="20" rx="3" fill="#fff" stroke="#E2E5EA" stroke-width="0.5"/>
+    <rect x="265.1" y="97.0" width="1.4" height="14" rx="0.6" fill="#3B82F6"/>
+    <text x="309.9" y="103.5" text-anchor="middle" font-size="4.8" font-weight="600" fill="#1E293B">NFTVoting</text>
+    <text x="309.9" y="108.5" text-anchor="middle" font-size="3.5" fill="#64748B">voting plugin (clone)</text>
+  </g>
+  <g filter="url(#shadow)">
+    <rect x="143.3" y="94.0" width="96.8" height="20" rx="3" fill="#fff" stroke="#E2E5EA" stroke-width="0.5"/>
+    <rect x="146.3" y="97.0" width="1.4" height="14" rx="0.6" fill="#3B82F6"/>
+    <text x="191.7" y="103.5" text-anchor="middle" font-size="4.8" font-weight="600" fill="#1E293B">GovernanceERC721</text>
+    <text x="191.7" y="108.5" text-anchor="middle" font-size="3.5" fill="#64748B">ERC721Votes token</text>
+  </g>
+  <g filter="url(#shadow)">
+    <rect x="30.0" y="156.0" width="116.0" height="20" rx="3" fill="#fff" stroke="#E2E5EA" stroke-width="0.5"/>
+    <rect x="33.0" y="159.0" width="1.4" height="14" rx="0.6" fill="#3B82F6"/>
+    <text x="88.0" y="165.5" text-anchor="middle" font-size="4.8" font-weight="600" fill="#1E293B">VotingPowerCondition</text>
+    <text x="88.0" y="170.5" text-anchor="middle" font-size="3.5" fill="#64748B">create-proposal gate</text>
+  </g>
+  <g filter="url(#shadow)">
+    <rect x="318.0" y="156.0" width="178.4" height="20" rx="3" fill="#fff" stroke="#E2E5EA" stroke-width="0.5"/>
+    <rect x="321.0" y="159.0" width="1.4" height="14" rx="0.6" fill="#F59E0B"/>
+    <text x="407.2" y="165.5" text-anchor="middle" font-size="4.8" font-weight="600" fill="#1E293B">osx-commons</text>
+    <text x="407.2" y="170.5" text-anchor="middle" font-size="3.5" fill="#64748B">PluginCloneable / Proposal / DaoAuthorizable</text>
+  </g>
+  <g filter="url(#shadow)">
+    <rect x="168.0" y="156.0" width="128.0" height="20" rx="3" fill="#fff" stroke="#E2E5EA" stroke-width="0.5"/>
+    <rect x="171.0" y="159.0" width="1.4" height="14" rx="0.6" fill="#F59E0B"/>
+    <text x="232.0" y="165.5" text-anchor="middle" font-size="4.8" font-weight="600" fill="#1E293B">OZ Upgradeable</text>
+    <text x="232.0" y="170.5" text-anchor="middle" font-size="3.5" fill="#64748B">ERC721Votes / Votes / SafeCast</text>
+  </g>
+  <rect x="275.2" y="65.0" width="37.6" height="6.0" rx="1" fill="#F8F9FB"/>
+  <text x="294.0" y="70.0" font-size="4" fill="#1E293B" font-weight="500" text-anchor="middle">createProposal</text>
+  <rect x="343.3" y="65.0" width="13.6" height="6.0" rx="1" fill="#F8F9FB"/>
+  <text x="350.1" y="70.0" font-size="4" fill="#1E293B" font-weight="500" text-anchor="middle">vote</text>
+  <rect x="389.5" y="65.0" width="20.8" height="6.0" rx="1" fill="#F8F9FB"/>
+  <text x="399.9" y="70.0" font-size="4" fill="#1E293B" font-weight="500" text-anchor="middle">execute</text>
+  <rect x="215.5" y="65.0" width="52.0" height="6.0" rx="1" fill="#F8F9FB"/>
+  <text x="241.5" y="70.0" font-size="4" fill="#1E293B" font-weight="500" text-anchor="middle">updateVotingSettings</text>
+  <rect x="221.5" y="57.0" width="40.0" height="6.0" rx="1" fill="#F8F9FB"/>
+  <text x="241.5" y="62.0" font-size="4" fill="#1E293B" font-weight="500" text-anchor="middle">execute actions</text>
+  <rect x="140.0" y="63.0" width="68.8" height="6.0" rx="1" fill="#F8F9FB"/>
+  <text x="174.4" y="68.0" font-size="4" fill="#1E293B" font-weight="500" text-anchor="middle">mint / burn / adminTransfer</text>
+  <rect x="223.9" y="125.0" width="54.4" height="6.0" rx="1" fill="#EDEEF2"/>
+  <text x="251.1" y="130.0" font-size="4" fill="#1E293B" font-weight="500" text-anchor="middle">getPastVotes / supply</text>
+  <rect x="174.1" y="134.0" width="49.6" height="6.0" rx="1" fill="#EDEEF2"/>
+  <text x="198.9" y="139.0" font-size="4" fill="#1E293B" font-weight="500" text-anchor="middle">reads minProposerVP</text>
+  <rect x="123.4" y="130.0" width="32.8" height="6.0" rx="1" fill="#EDEEF2"/>
+  <text x="139.8" y="135.0" font-size="4" fill="#1E293B" font-weight="500" text-anchor="middle">getPastVotes</text>
+  <rect x="334.9" y="130.0" width="47.2" height="6.0" rx="1" fill="#EDEEF2"/>
+  <text x="358.5" y="135.0" font-size="4" fill="#1E293B" font-weight="500" text-anchor="middle">inherits cloneable</text>
+  <rect x="279.4" y="134.0" width="40.0" height="6.0" rx="1" fill="#EDEEF2"/>
+  <text x="299.4" y="139.0" font-size="4" fill="#1E293B" font-weight="500" text-anchor="middle">DaoAuthorizable</text>
+  <rect x="177.0" y="126.0" width="37.6" height="6.0" rx="1" fill="#EDEEF2"/>
+  <text x="195.8" y="131.0" font-size="4" fill="#1E293B" font-weight="500" text-anchor="middle">inherits Votes</text>
+</svg>
