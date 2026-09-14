@@ -132,13 +132,13 @@ contract InstallNFTVotingTest is ForkTestBase {
             supportThreshold: 500_000,
             minParticipation: 100_000,
             minDuration: 1 hours,
-            minProposerVotingPower: 0
+            minProposerVotingPower: 0,
+            minApprovals: 1
         });
 
         params.tokenName = "Test NFT";
         params.tokenSymbol = "TNFT";
         params.nftCount = 1;
-        params.minApprovals = 1;
         params.targetConfig = IPlugin.TargetConfig({target: address(0), operation: IPlugin.Operation.Call});
     }
 }

@@ -28,7 +28,6 @@ struct InstallParams {
     string baseTokenURI;
     uint256 nftCount;
     IPlugin.TargetConfig targetConfig; // target == address(0) resolves to the DAO itself
-    uint256 minApprovals;
     bytes pluginMetadata;
 }
 
@@ -178,7 +177,6 @@ contract InstallNFTVotingScript is Script {
                         _params.votingSettings,
                         _token,
                         targetConfig,
-                        _params.minApprovals,
                         _params.pluginMetadata
                     )
                 )
@@ -239,7 +237,6 @@ contract InstallNFTVotingScript is Script {
             target: vm.envOr("TARGET_ADDRESS", address(0)),
             operation: IPlugin.Operation(vm.envOr("TARGET_OPERATION", uint256(0)))
         });
-        params.minApprovals = vm.envOr("MIN_APPROVALS", uint256(1));
         params.pluginMetadata = bytes(vm.envOr("PLUGIN_METADATA_URI", string("")));
     }
 
@@ -249,6 +246,7 @@ contract InstallNFTVotingScript is Script {
         params.votingSettings.minParticipation = uint32(vm.envOr("MIN_PARTICIPATION", uint256(100_000)));
         params.votingSettings.minDuration = uint64(vm.envOr("MIN_DURATION", uint256(1 hours)));
         params.votingSettings.minProposerVotingPower = vm.envOr("MIN_PROPOSER_VOTING_POWER", uint256(0));
+        params.votingSettings.minApprovals = vm.envOr("MIN_APPROVALS", uint256(1));
     }
 
     function printDeployment() public view {

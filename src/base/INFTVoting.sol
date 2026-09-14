@@ -47,12 +47,15 @@ interface INFTVoting {
     ///     Its value has to be in the interval [0, 10^6] defined by `RATIO_BASE = 10**6`.
     /// @param minDuration The minimum duration of the proposal vote in seconds.
     /// @param minProposerVotingPower The minimum voting power required to create a proposal.
+    /// @param minApprovals The minimum ratio of yes votes needed for a proposal to succeed.
+    ///     Its value has to be in the interval [0, 10^6] defined by `RATIO_BASE = 10**6`.
     struct VotingSettings {
         VotingMode votingMode;
         uint32 supportThreshold;
         uint32 minParticipation;
         uint64 minDuration;
         uint256 minProposerVotingPower;
+        uint256 minApprovals;
     }
 
     /// @notice A container for proposal-related information.
@@ -119,17 +122,15 @@ interface INFTVoting {
     /// @param minParticipation The minimum participation value.
     /// @param minDuration The minimum duration of the proposal vote in seconds.
     /// @param minProposerVotingPower The minimum voting power required to create a proposal.
+    /// @param minApprovals The minimum ratio of yes votes needed for a proposal to succeed.
     event VotingSettingsUpdated(
         VotingMode votingMode,
         uint32 supportThreshold,
         uint32 minParticipation,
         uint64 minDuration,
-        uint256 minProposerVotingPower
+        uint256 minProposerVotingPower,
+        uint256 minApprovals
     );
-
-    /// @notice Emitted when the min approval value is updated.
-    /// @param minApprovals The minimum amount of yes votes needed for a proposal succeed.
-    event VotingMinApprovalUpdated(uint256 minApprovals);
 
     /// @notice Thrown if a date is out of bounds.
     /// @param limit The limit value.

@@ -58,11 +58,11 @@ contract NFTVotingTest is TestBase {
                 supportThreshold: 500_000,
                 minParticipation: 100_000,
                 minDuration: ONE_HOUR,
-                minProposerVotingPower: 0
+                minProposerVotingPower: 0,
+                minApprovals: 1
             }),
             IVotesUpgradeable(address(nft)),
             IPlugin.TargetConfig(address(dao), IPlugin.Operation.Call),
-            0,
             ""
         );
     }
@@ -406,7 +406,8 @@ contract NFTVotingTest is TestBase {
             supportThreshold: 500_000,
             minParticipation: 100_000,
             minDuration: ONE_HOUR,
-            minProposerVotingPower: 0
+            minProposerVotingPower: 0,
+            minApprovals: 1
         });
 
         bytes memory expectedErr = abi.encodeWithSelector(
@@ -426,7 +427,8 @@ contract NFTVotingTest is TestBase {
             supportThreshold: RATIO_BASE, // must be < RATIO_BASE
             minParticipation: 100_000,
             minDuration: ONE_HOUR,
-            minProposerVotingPower: 0
+            minProposerVotingPower: 0,
+            minApprovals: 1
         });
 
         dao.grant(address(plugin), address(this), plugin.UPDATE_VOTING_SETTINGS_PERMISSION_ID());
@@ -442,7 +444,8 @@ contract NFTVotingTest is TestBase {
             supportThreshold: 0,
             minParticipation: 100_000,
             minDuration: ONE_HOUR,
-            minProposerVotingPower: 0
+            minProposerVotingPower: 0,
+            minApprovals: 1
         });
 
         dao.grant(address(plugin), address(this), plugin.UPDATE_VOTING_SETTINGS_PERMISSION_ID());
@@ -458,7 +461,8 @@ contract NFTVotingTest is TestBase {
             supportThreshold: 500_000,
             minParticipation: 0,
             minDuration: ONE_HOUR,
-            minProposerVotingPower: 0
+            minProposerVotingPower: 0,
+            minApprovals: 1
         });
 
         dao.grant(address(plugin), address(this), plugin.UPDATE_VOTING_SETTINGS_PERMISSION_ID());
@@ -469,9 +473,18 @@ contract NFTVotingTest is TestBase {
     function test_WhenMinApprovalIsZero_ItReverts() external {
         _build(_one(alice));
 
+        INFTVoting.VotingSettings memory settings = INFTVoting.VotingSettings({
+            votingMode: INFTVoting.VotingMode.Standard,
+            supportThreshold: 500_000,
+            minParticipation: 100_000,
+            minDuration: ONE_HOUR,
+            minProposerVotingPower: 0,
+            minApprovals: 0
+        });
+
         dao.grant(address(plugin), address(this), plugin.UPDATE_VOTING_SETTINGS_PERMISSION_ID());
         vm.expectRevert(abi.encodeWithSelector(RatioOutOfBounds.selector, RATIO_BASE, 0));
-        plugin.updateMinApprovals(0);
+        plugin.updateVotingSettings(settings);
     }
 
     function test_WhenMinProposerVotingPowerIsSet_ProposalCreationIsGatedByVotingPower() external {

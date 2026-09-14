@@ -153,7 +153,8 @@ contract NFTDAOBuilder is TestBase {
             supportThreshold: supportThreshold,
             minParticipation: minParticipation,
             minDuration: minDuration,
-            minProposerVotingPower: minProposerVotingPower
+            minProposerVotingPower: minProposerVotingPower,
+            minApprovals: minApprovals
         });
 
         // Deploy the plugin
@@ -161,7 +162,7 @@ contract NFTDAOBuilder is TestBase {
             ProxyLib.deployUUPSProxy(
                 address(NFT_VOTING_PLUGIN_BASE),
                 abi.encodeCall(
-                    NFTVoting.initialize, (dao, votingSettings, token_, targetConfig, minApprovals, pluginMetadata)
+                    NFTVoting.initialize, (dao, votingSettings, token_, targetConfig, pluginMetadata)
                 )
             )
         );

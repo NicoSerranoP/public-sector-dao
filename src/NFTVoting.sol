@@ -37,7 +37,6 @@ contract NFTVoting is INFTVoting, IMembership, MetadataExtensionUpgradeable, Plu
     bytes4 internal constant MAJORITY_VOTING_BASE_INTERFACE_ID = this.minDuration.selector
         ^ this.getVotingToken.selector ^ this.minProposerVotingPower.selector ^ this.votingMode.selector
         ^ this.totalVotingPower.selector ^ this.getProposal.selector ^ this.updateVotingSettings.selector
-        ^ this.updateMinApprovals.selector
         ^ bytes4(keccak256("createProposal(bytes,(address,uint256,bytes)[],uint256,uint64,uint64,uint8,bool)"));
 
     /// @notice The ID of the permission required to call the `updateVotingSettings` function.
@@ -55,10 +54,6 @@ contract NFTVoting is INFTVoting, IMembership, MetadataExtensionUpgradeable, Plu
 
     /// @notice The struct storing the voting settings.
     VotingSettings private votingSettings;
-
-    /// @notice The minimum ratio of yes votes needed for a proposal to succeed.
-    /// @dev Not included in VotingSettings for compatibility reasons.
-    uint256 private minApprovals; // added in v1.3
 
     /// @notice An ERC721 NFT [OpenZeppelin `Votes`](https://docs.openzeppelin.com/contracts/4.x/api/governance#Votes)
     IVotesUpgradeable private votingToken;
@@ -84,7 +79,6 @@ contract NFTVoting is INFTVoting, IMembership, MetadataExtensionUpgradeable, Plu
     /// @param _targetConfig Configuration for the execution target, specifying the target address and operation type
     ///     (either `Call` or `DelegateCall`). Defined by `TargetConfig` in the `IPlugin` interface,
     ///     part of the `osx-commons-contracts` package, added in build 3.
-    /// @param _minApprovals The minimal amount of approvals the proposal needs to succeed.
     /// @param _pluginMetadata The plugin specific information encoded in bytes.
     ///     This can also be an ipfs cid encoded in bytes.
     function initialize(
@@ -92,14 +86,12 @@ contract NFTVoting is INFTVoting, IMembership, MetadataExtensionUpgradeable, Plu
         VotingSettings calldata _votingSettings,
         IVotesUpgradeable _token,
         TargetConfig calldata _targetConfig,
-        uint256 _minApprovals,
         bytes calldata _pluginMetadata
     ) external initializer {
         require(IERC165Upgradeable(address(_token)).supportsInterface(type(IERC721Upgradeable).interfaceId), "token is not a ERC721");
 
         __PluginCloneable_init(_dao);
         _updateVotingSettings(_votingSettings);
-        _updateMinApprovals(_minApprovals);
         _setTargetConfig(_targetConfig);
         _setMetadata(_pluginMetadata);
 
@@ -391,7 +383,7 @@ contract NFTVoting is INFTVoting, IMembership, MetadataExtensionUpgradeable, Plu
     }
 
     function minApproval() public view virtual returns (uint256) {
-        return minApprovals;
+        return votingSettings.minApprovals;
     }
 
     function supportThreshold() public view virtual returns (uint32) {
@@ -522,6 +514,12 @@ contract NFTVoting is INFTVoting, IMembership, MetadataExtensionUpgradeable, Plu
             revert MinDurationOutOfBounds({limit: 365 days, actual: _votingSettings.minDuration});
         }
 
+        // Require the minimum approval value to be in the interval [1, 10^6],
+        // because `>=` comparison is used in the participation criterion.
+        if (_votingSettings.minApprovals == 0 || _votingSettings.minApprovals > RATIO_BASE) {
+            revert RatioOutOfBounds({limit: RATIO_BASE, actual: _votingSettings.minApprovals});
+        }
+
         votingSettings = _votingSettings;
 
         emit VotingSettingsUpdated({
@@ -529,28 +527,9 @@ contract NFTVoting is INFTVoting, IMembership, MetadataExtensionUpgradeable, Plu
             supportThreshold: _votingSettings.supportThreshold,
             minParticipation: _votingSettings.minParticipation,
             minDuration: _votingSettings.minDuration,
-            minProposerVotingPower: _votingSettings.minProposerVotingPower
+            minProposerVotingPower: _votingSettings.minProposerVotingPower,
+            minApprovals: _votingSettings.minApprovals
         });
-    }
-
-    /// @notice Updates the minimal approval value.
-    /// @dev Requires the `UPDATE_VOTING_SETTINGS_PERMISSION_ID` permission.
-    /// @param _minApprovals The new minimal approval value.
-    function updateMinApprovals(uint256 _minApprovals) external virtual auth(UPDATE_VOTING_SETTINGS_PERMISSION_ID) {
-        _updateMinApprovals(_minApprovals);
-    }
-
-    /// @notice Internal function to update minimal approval value.
-    /// @param _minApprovals The new minimal approval value.
-    function _updateMinApprovals(uint256 _minApprovals) internal virtual {
-        // Require the minimum approval value to be in the interval [1, 10^6],
-        // because `>=` comparison is used in the participation criterion.
-        if (_minApprovals == 0 || _minApprovals > RATIO_BASE) {
-            revert RatioOutOfBounds({limit: RATIO_BASE, actual: _minApprovals});
-        }
-
-        minApprovals = _minApprovals;
-        emit VotingMinApprovalUpdated(_minApprovals);
     }
 
     /// @notice Creates a new majority voting proposal.
