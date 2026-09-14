@@ -239,7 +239,7 @@ contract InstallNFTVotingScript is Script {
             target: vm.envOr("TARGET_ADDRESS", address(0)),
             operation: IPlugin.Operation(vm.envOr("TARGET_OPERATION", uint256(0)))
         });
-        params.minApprovals = vm.envOr("MIN_APPROVALS", uint256(0));
+        params.minApprovals = vm.envOr("MIN_APPROVALS", uint256(1));
         params.pluginMetadata = bytes(vm.envOr("PLUGIN_METADATA_URI", string("")));
     }
 

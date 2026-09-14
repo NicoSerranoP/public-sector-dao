@@ -23,13 +23,13 @@ contract NFTDAOBuilder is TestBase {
     uint32 supportThreshold = 500_000; // 50%
     uint32 minParticipation = 100_000; // 10%
     uint64 minDuration = 60 * 60; // 1h
+    uint256 minApprovals = 1;
     uint256 minProposerVotingPower;
 
     IVotesUpgradeable token;
     address[] newTokenReceivers;
     address targetAddress;
     IPlugin.Operation targetOperation;
-    uint256 minApprovals;
     bytes pluginMetadata;
 
     constructor() {

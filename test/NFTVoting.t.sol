@@ -434,6 +434,46 @@ contract NFTVotingTest is TestBase {
         plugin.updateVotingSettings(settings);
     }
 
+    function test_WhenSupportThresholdIsZero_ItReverts() external {
+        _build(_one(alice));
+
+        INFTVoting.VotingSettings memory settings = INFTVoting.VotingSettings({
+            votingMode: INFTVoting.VotingMode.Standard,
+            supportThreshold: 0,
+            minParticipation: 100_000,
+            minDuration: ONE_HOUR,
+            minProposerVotingPower: 0
+        });
+
+        dao.grant(address(plugin), address(this), plugin.UPDATE_VOTING_SETTINGS_PERMISSION_ID());
+        vm.expectRevert(abi.encodeWithSelector(RatioOutOfBounds.selector, RATIO_BASE - 1, 0));
+        plugin.updateVotingSettings(settings);
+    }
+
+    function test_WhenMinParticipationIsZero_ItReverts() external {
+        _build(_one(alice));
+
+        INFTVoting.VotingSettings memory settings = INFTVoting.VotingSettings({
+            votingMode: INFTVoting.VotingMode.Standard,
+            supportThreshold: 500_000,
+            minParticipation: 0,
+            minDuration: ONE_HOUR,
+            minProposerVotingPower: 0
+        });
+
+        dao.grant(address(plugin), address(this), plugin.UPDATE_VOTING_SETTINGS_PERMISSION_ID());
+        vm.expectRevert(abi.encodeWithSelector(RatioOutOfBounds.selector, RATIO_BASE, 0));
+        plugin.updateVotingSettings(settings);
+    }
+
+    function test_WhenMinApprovalIsZero_ItReverts() external {
+        _build(_one(alice));
+
+        dao.grant(address(plugin), address(this), plugin.UPDATE_VOTING_SETTINGS_PERMISSION_ID());
+        vm.expectRevert(abi.encodeWithSelector(RatioOutOfBounds.selector, RATIO_BASE, 0));
+        plugin.updateMinApprovals(0);
+    }
+
     function test_WhenMinProposerVotingPowerIsSet_ProposalCreationIsGatedByVotingPower() external {
         IVotesUpgradeable token_;
         (dao, plugin, token_) = new NFTDAOBuilder().withMinProposerVotingPower(1).withNewToken(_one(alice)).build();

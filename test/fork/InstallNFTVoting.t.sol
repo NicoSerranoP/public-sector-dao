@@ -138,6 +138,7 @@ contract InstallNFTVotingTest is ForkTestBase {
         params.tokenName = "Test NFT";
         params.tokenSymbol = "TNFT";
         params.nftCount = 1;
+        params.minApprovals = 1;
         params.targetConfig = IPlugin.TargetConfig({target: address(0), operation: IPlugin.Operation.Call});
     }
 }
