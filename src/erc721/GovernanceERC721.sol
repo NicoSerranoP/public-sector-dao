@@ -20,7 +20,6 @@ import {
     DaoAuthorizableUpgradeable
 } from "@aragon/osx-commons-contracts/src/permission/auth/DaoAuthorizableUpgradeable.sol";
 import {IDAO} from "@aragon/osx-commons-contracts/src/dao/IDAO.sol";
-import {IERC721MintableUpgradeable} from "./IERC721MintableUpgradeable.sol";
 
 /* solhint-enable max-line-length */
 
@@ -36,7 +35,6 @@ import {IERC721MintableUpgradeable} from "./IERC721MintableUpgradeable.sol";
 ///     (on mint and on transfer). Holders can override this at any time by calling `delegate`.
 /// @custom:security-contact sirt@aragon.org
 contract GovernanceERC721 is
-    IERC721MintableUpgradeable,
     Initializable,
     ERC165Upgradeable,
     ERC721VotesUpgradeable,
@@ -122,12 +120,13 @@ contract GovernanceERC721 is
             || _interfaceId == type(IERC721MetadataUpgradeable).interfaceId
             || _interfaceId == type(IVotesUpgradeable).interfaceId
             || _interfaceId == type(IERC6372Upgradeable).interfaceId
-            || _interfaceId == type(IERC721MintableUpgradeable).interfaceId || super.supportsInterface(_interfaceId);
+            || super.supportsInterface(_interfaceId);
     }
 
-    /// @inheritdoc IERC721MintableUpgradeable
+    /// @notice Mints a single [ERC-721](https://eips.ethereum.org/EIPS/eip-721) token for a receiving address.
+    /// @param _to The receiving address.
     /// @dev Requires the `MINT_PERMISSION_ID` permission.
-    function mint(address _to) external virtual override auth(MINT_PERMISSION_ID) returns (uint256 tokenId) {
+    function mint(address _to) external virtual auth(MINT_PERMISSION_ID) returns (uint256 tokenId) {
         return _mintTo(_to);
     }
 
