@@ -181,7 +181,7 @@ contract NFTVotingTest is TestBase {
         (dao, plugin,) = new NFTDAOBuilder().withToken(IVotesUpgradeable(address(emptyToken))).build();
 
         vm.prank(alice);
-        vm.expectRevert(abi.encodeWithSelector(INFTVoting.ProposalCreationForbidden.selector, alice));
+        vm.expectRevert(abi.encodeWithSelector(INFTVoting.NoVotingPower.selector));
         plugin.createProposal("", _dummyActions(), 0, 0, 0, INFTVoting.VoteOption.None, false);
     }
 
