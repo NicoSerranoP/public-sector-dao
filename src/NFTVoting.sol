@@ -60,13 +60,11 @@ contract NFTVoting is INFTVoting, IMembership, MetadataExtensionUpgradeable, Plu
     /// @dev Not included in VotingSettings for compatibility reasons.
     uint256 private minApprovals; // added in v1.3
 
-    /// @notice An [OpenZeppelin `Votes`](https://docs.openzeppelin.com/contracts/4.x/api/governance#Votes)
-    ///         compatible contract referencing the [ERC-721](https://eips.ethereum.org/EIPS/eip-721)
-    ///         token being used for voting.
-    IVotesUpgradeable private votingToken; // Slot 0
+    /// @notice An ERC721 NFT [OpenZeppelin `Votes`](https://docs.openzeppelin.com/contracts/4.x/api/governance#Votes)
+    IVotesUpgradeable private votingToken;
 
     /// @notice Wether the token contract indexes past voting power by timestamp.
-    bool public tokenIndexedByTimestamp; // Slot 0
+    bool public tokenIndexedByTimestamp;
 
     modifier onlyIfProposalExists(uint256 _proposalId) {
         if (!_proposalExists(_proposalId)) {
