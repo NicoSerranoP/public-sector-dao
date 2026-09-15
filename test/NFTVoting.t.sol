@@ -9,6 +9,7 @@ import {DaoUnauthorized} from "@aragon/osx-commons-contracts/src/permission/auth
 import {NFTVoting} from "../src/NFTVoting.sol";
 import {GovernanceERC721} from "../src/erc721/GovernanceERC721.sol";
 import {MockGovernanceERC721} from "./mocks/MockGovernanceERC721.sol";
+import {MockPlainERC721} from "./mocks/MockPlainERC721.sol";
 import {Action} from "@aragon/osx-commons-contracts/src/executors/IExecutor.sol";
 import {INFTVoting} from "../src/base/INFTVoting.sol";
 import {IPlugin} from "@aragon/osx-commons-contracts/src/plugin/IPlugin.sol";
@@ -485,6 +486,87 @@ contract NFTVotingTest is TestBase {
         dao.grant(address(plugin), address(this), plugin.UPDATE_VOTING_SETTINGS_PERMISSION_ID());
         vm.expectRevert(abi.encodeWithSelector(RatioOutOfBounds.selector, RATIO_BASE, 0));
         plugin.updateVotingSettings(settings);
+    }
+
+    // -----------------------------------------------------------------------
+    // voting token
+    // -----------------------------------------------------------------------
+
+    function test_WhenAnUnauthorizedAccountUpdatesTheVotingToken_ItReverts() external {
+        _build(_one(alice));
+
+        GovernanceERC721.TokenSettings memory settings = GovernanceERC721.TokenSettings({
+            name: "New NFT",
+            symbol: "NEW",
+            baseURI: "https://example.com/",
+            receivers: _one(alice)
+        });
+        GovernanceERC721 newToken = new GovernanceERC721(IDAO(address(dao)), settings);
+
+        bytes memory expectedErr = abi.encodeWithSelector(
+            DaoUnauthorized.selector, address(dao), address(plugin), bob, plugin.UPDATE_VOTING_SETTINGS_PERMISSION_ID()
+        );
+
+        vm.prank(bob);
+        vm.expectRevert(expectedErr);
+        plugin.updateVotingToken(IVotesUpgradeable(address(newToken)));
+    }
+
+    function test_WhenTheNewVotingTokenIsNotAnERC721_ItReverts() external {
+        _build(_one(alice));
+
+        // A plain DAO implements ERC-165 but not the ERC-721 interface.
+        IVotesUpgradeable notAnNft = IVotesUpgradeable(address(new DAO()));
+
+        dao.grant(address(plugin), address(this), plugin.UPDATE_VOTING_SETTINGS_PERMISSION_ID());
+
+        vm.expectRevert("token is not a ERC721");
+        plugin.updateVotingToken(notAnNft);
+    }
+
+    function test_WhenTheNewVotingTokenIsNotVotesUpgradeable_ItReverts() external {
+        _build(_one(alice));
+
+        // An ERC-721 without the Votes-Upgradeable interface.
+        IVotesUpgradeable notVotesUpgradeable = IVotesUpgradeable(address(new MockPlainERC721()));
+
+        dao.grant(address(plugin), address(this), plugin.UPDATE_VOTING_SETTINGS_PERMISSION_ID());
+
+        vm.expectRevert("token is not a Votes Upgradeable (required getVotes and getPastTotalSupply)");
+        plugin.updateVotingToken(notVotesUpgradeable);
+    }
+
+    function test_WhenAnAuthorizedAccountUpdatesTheVotingToken_ItReplacesTheInitializedToken() external {
+        _build(_one(alice));
+
+        GovernanceERC721.TokenSettings memory settings = GovernanceERC721.TokenSettings({
+            name: "New NFT",
+            symbol: "NEW",
+            baseURI: "https://example.com/",
+            receivers: _one(bob)
+        });
+        GovernanceERC721 newToken = new GovernanceERC721(IDAO(address(dao)), settings);
+
+        vm.roll(block.number + 1);
+        vm.warp(block.timestamp + 1);
+
+        dao.grant(address(plugin), address(this), plugin.UPDATE_VOTING_SETTINGS_PERMISSION_ID());
+
+        vm.expectEmit(true, true, true, true, address(plugin));
+        emit INFTVoting.VotingTokenUpdated(address(newToken));
+        plugin.updateVotingToken(IVotesUpgradeable(address(newToken)));
+
+        assertEq(address(plugin.getVotingToken()), address(newToken), "voting token should be replaced");
+
+        // The old token's voting power should no longer count.
+        assertEq(plugin.totalVotingPower(block.number - 1), 1, "only the new token's supply should count");
+
+        // A holder of the new (but not the old) token can now vote.
+        vm.prank(bob);
+        uint256 proposalId = plugin.createProposal("", _dummyActions(), 0, 0, 0, INFTVoting.VoteOption.None, false);
+
+        assertFalse(plugin.canVote(proposalId, alice, INFTVoting.VoteOption.Yes), "alice held only the old token");
+        assertTrue(plugin.canVote(proposalId, bob, INFTVoting.VoteOption.Yes), "bob holds the new token");
     }
 
     function test_WhenMinProposerVotingPowerIsSet_ProposalCreationIsGatedByVotingPower() external {

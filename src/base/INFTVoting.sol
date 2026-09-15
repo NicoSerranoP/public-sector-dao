@@ -132,6 +132,10 @@ interface INFTVoting {
         uint256 minApprovals
     );
 
+    /// @notice Emitted when the voting token is updated.
+    /// @param votingToken The new ERC-721 voting token.
+    event VotingTokenUpdated(address votingToken);
+
     /// @notice Thrown if a date is out of bounds.
     /// @param limit The limit value.
     /// @param actual The actual value.

@@ -88,16 +88,11 @@ contract NFTVoting is INFTVoting, IMembership, MetadataExtensionUpgradeable, Plu
         TargetConfig calldata _targetConfig,
         bytes calldata _pluginMetadata
     ) external initializer {
-        require(IERC165Upgradeable(address(_token)).supportsInterface(type(IERC721Upgradeable).interfaceId), "token is not a ERC721");
-
         __PluginCloneable_init(_dao);
         _updateVotingSettings(_votingSettings);
+        _updateVotingToken(_token);
         _setTargetConfig(_targetConfig);
         _setMetadata(_pluginMetadata);
-
-        votingToken = _token;
-
-        _detectTokenClock();
 
         emit MembershipContractAnnounced({definingContract: address(_token)});
     }
@@ -168,7 +163,7 @@ contract NFTVoting is INFTVoting, IMembership, MetadataExtensionUpgradeable, Plu
             proposal_.tally.abstain = proposal_.tally.abstain - votingPower;
         }
 
-        // write the updated/new vote for the voter.
+        // write the new vote or replace vote for the voter.
         if (_voteOption == VoteOption.Yes) {
             proposal_.tally.yes = proposal_.tally.yes + votingPower;
         } else if (_voteOption == VoteOption.No) {
@@ -530,6 +525,39 @@ contract NFTVoting is INFTVoting, IMembership, MetadataExtensionUpgradeable, Plu
             minProposerVotingPower: _votingSettings.minProposerVotingPower,
             minApprovals: _votingSettings.minApprovals
         });
+    }
+
+    /// @notice Updates the voting token.
+    /// @dev Requires the `UPDATE_VOTING_SETTINGS_PERMISSION_ID` permission.
+    /// @param _token The new ERC-721 voting token.
+    function updateVotingToken(IVotesUpgradeable _token)
+        external
+        virtual
+        auth(UPDATE_VOTING_SETTINGS_PERMISSION_ID)
+    {
+        _updateVotingToken(_token);
+    }
+
+    /// @notice Internal function to update the voting token.
+    /// @param _token The ERC-721 voting token to be validated and set.
+    function _updateVotingToken(IVotesUpgradeable _token) internal virtual {
+        require(
+            IERC165Upgradeable(address(_token))
+            .supportsInterface(type(IERC721Upgradeable).interfaceId),
+            "token is not a ERC721"
+        );
+
+        require(
+            IERC165Upgradeable(address(_token))
+            .supportsInterface(type(IVotesUpgradeable).interfaceId),
+            "token is not a Votes Upgradeable (required getVotes and getPastTotalSupply)"
+        );
+
+        votingToken = _token;
+
+        _detectTokenClock();
+
+        emit VotingTokenUpdated(address(_token));
     }
 
     /// @notice Creates a new majority voting proposal.
