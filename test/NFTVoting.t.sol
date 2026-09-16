@@ -129,7 +129,7 @@ contract NFTVotingTest is TestBase {
         vm.warp(block.timestamp + 1);
 
         vm.prank(alice);
-        uint256 proposalId = plugin.createProposal("", _dummyActions(), 0, 0, 0, INFTVoting.VoteOption.None, false);
+        uint256 proposalId = plugin.createProposal("", _dummyActions(), 0, 0, 0);
 
         assertFalse(plugin.canVote(proposalId, alice, INFTVoting.VoteOption.Yes), "alice delegated away her power");
         assertTrue(plugin.canVote(proposalId, carol, INFTVoting.VoteOption.Yes), "carol holds the voting power");
@@ -153,7 +153,7 @@ contract NFTVotingTest is TestBase {
         _build(receivers);
 
         vm.prank(alice);
-        uint256 proposalId = plugin.createProposal("", _dummyActions(), 0, 0, 0, INFTVoting.VoteOption.None, false);
+        uint256 proposalId = plugin.createProposal("", _dummyActions(), 0, 0, 0);
 
         assertEq(plugin.totalVotingPower(block.number - 1), 3, "3 delegated NFTs");
 
@@ -172,10 +172,7 @@ contract NFTVotingTest is TestBase {
 
         // Move the single NFT out via burn is not available here; instead build with a token that has supply 0.
         GovernanceERC721.TokenSettings memory settings = GovernanceERC721.TokenSettings({
-            name: "Empty",
-            symbol: "MT",
-            baseURI: "https://example.com/",
-            receivers: new address[](0)
+            name: "Empty", symbol: "MT", baseURI: "https://example.com/", receivers: new address[](0)
         });
 
         MockGovernanceERC721 emptyToken = new MockGovernanceERC721(IDAO(address(0)), settings);
@@ -183,7 +180,7 @@ contract NFTVotingTest is TestBase {
 
         vm.prank(alice);
         vm.expectRevert(abi.encodeWithSelector(INFTVoting.NoVotingPower.selector));
-        plugin.createProposal("", _dummyActions(), 0, 0, 0, INFTVoting.VoteOption.None, false);
+        plugin.createProposal("", _dummyActions(), 0, 0, 0);
     }
 
     // -----------------------------------------------------------------------
@@ -201,7 +198,7 @@ contract NFTVotingTest is TestBase {
         vm.warp(block.timestamp + 1);
 
         vm.prank(bob);
-        uint256 proposalId = plugin.createProposal("", _dummyActions(), 0, 0, 0, INFTVoting.VoteOption.None, false);
+        uint256 proposalId = plugin.createProposal("", _dummyActions(), 0, 0, 0);
 
         assertFalse(plugin.canVote(proposalId, alice, INFTVoting.VoteOption.Yes), "alice no longer holds the NFT");
         assertTrue(plugin.canVote(proposalId, bob, INFTVoting.VoteOption.Yes), "bob received the NFT");
@@ -239,10 +236,7 @@ contract NFTVotingTest is TestBase {
 
     function test_WhenAnNFTIsBurned_ItsVotingPowerIsRemoved() external {
         GovernanceERC721.TokenSettings memory settings = GovernanceERC721.TokenSettings({
-            name: "Test NFT",
-            symbol: "TNFT",
-            baseURI: "https://example.com/",
-            receivers: new address[](0)
+            name: "Test NFT", symbol: "TNFT", baseURI: "https://example.com/", receivers: new address[](0)
         });
 
         MockGovernanceERC721 token_ = new MockGovernanceERC721(IDAO(address(0)), settings);
@@ -292,9 +286,7 @@ contract NFTVotingTest is TestBase {
         _build(_one(alice));
 
         bytes memory expectedErr =
-            abi.encodeWithSelector(
-                DaoUnauthorized.selector, address(dao), address(nft), bob, nft.UPDATE_BASE_URI_ID()
-        );
+            abi.encodeWithSelector(DaoUnauthorized.selector, address(dao), address(nft), bob, nft.UPDATE_BASE_URI_ID());
 
         vm.prank(bob);
         vm.expectRevert(expectedErr);
@@ -318,9 +310,12 @@ contract NFTVotingTest is TestBase {
         dao.grant(address(plugin), address(this), plugin.EXECUTE_PROPOSAL_PERMISSION_ID());
 
         vm.prank(alice);
-        uint256 proposalId = plugin.createProposal("", _dummyActions(), 0, 0, 0, INFTVoting.VoteOption.Yes, false);
+        uint256 proposalId = plugin.createProposal("", _dummyActions(), 0, 0, 0);
 
-        // 2 of 3 yes already => remaining 1 no cannot defeat 50% threshold.
+        vm.prank(alice);
+        plugin.vote(proposalId, INFTVoting.VoteOption.Yes, false);
+
+        // 2 of 3 yes already (alice is present twice in receivers) => remaining 1 no cannot defeat 50% threshold.
         assertTrue(plugin.canExecute(proposalId), "early execution possible while still open");
     }
 
@@ -330,7 +325,7 @@ contract NFTVotingTest is TestBase {
         nft = GovernanceERC721(address(token_));
 
         vm.prank(alice);
-        uint256 proposalId = plugin.createProposal("", _dummyActions(), 0, 0, 0, INFTVoting.VoteOption.Yes, false);
+        uint256 proposalId = plugin.createProposal("", _dummyActions(), 0, 0, 0);
 
         vm.prank(alice);
         plugin.vote(proposalId, INFTVoting.VoteOption.No, false);
@@ -357,7 +352,10 @@ contract NFTVotingTest is TestBase {
         dao.grant(address(plugin), address(this), plugin.EXECUTE_PROPOSAL_PERMISSION_ID());
 
         vm.prank(alice);
-        uint256 proposalId = plugin.createProposal("", _dummyActions(), 0, 0, 0, INFTVoting.VoteOption.Yes, false);
+        uint256 proposalId = plugin.createProposal("", _dummyActions(), 0, 0, 0);
+
+        vm.prank(alice);
+        plugin.vote(proposalId, INFTVoting.VoteOption.Yes, false);
         vm.prank(bob);
         plugin.vote(proposalId, INFTVoting.VoteOption.Yes, false);
         vm.prank(carol);
@@ -380,12 +378,11 @@ contract NFTVotingTest is TestBase {
         receivers[3] = david;
 
         IVotesUpgradeable token_;
-        (dao, plugin, token_) =
-            new NFTDAOBuilder().withMinApprovals(uint64(RATIO_BASE)).withNewToken(receivers).build(); // 100% approval
+        (dao, plugin, token_) = new NFTDAOBuilder().withMinApprovals(uint64(RATIO_BASE)).withNewToken(receivers).build(); // 100% approval
         nft = GovernanceERC721(address(token_));
 
         vm.prank(alice);
-        uint256 proposalId = plugin.createProposal("", _dummyActions(), 0, 0, 0, INFTVoting.VoteOption.Yes, false);
+        uint256 proposalId = plugin.createProposal("", _dummyActions(), 0, 0, 0);
         vm.prank(bob);
         plugin.vote(proposalId, INFTVoting.VoteOption.Yes, false);
 
@@ -496,10 +493,7 @@ contract NFTVotingTest is TestBase {
         _build(_one(alice));
 
         GovernanceERC721.TokenSettings memory settings = GovernanceERC721.TokenSettings({
-            name: "New NFT",
-            symbol: "NEW",
-            baseURI: "https://example.com/",
-            receivers: _one(alice)
+            name: "New NFT", symbol: "NEW", baseURI: "https://example.com/", receivers: _one(alice)
         });
         GovernanceERC721 newToken = new GovernanceERC721(IDAO(address(dao)), settings);
 
@@ -540,10 +534,7 @@ contract NFTVotingTest is TestBase {
         _build(_one(alice));
 
         GovernanceERC721.TokenSettings memory settings = GovernanceERC721.TokenSettings({
-            name: "New NFT",
-            symbol: "NEW",
-            baseURI: "https://example.com/",
-            receivers: _one(bob)
+            name: "New NFT", symbol: "NEW", baseURI: "https://example.com/", receivers: _one(bob)
         });
         GovernanceERC721 newToken = new GovernanceERC721(IDAO(address(dao)), settings);
 
@@ -563,7 +554,7 @@ contract NFTVotingTest is TestBase {
 
         // A holder of the new (but not the old) token can now vote.
         vm.prank(bob);
-        uint256 proposalId = plugin.createProposal("", _dummyActions(), 0, 0, 0, INFTVoting.VoteOption.None, false);
+        uint256 proposalId = plugin.createProposal("", _dummyActions(), 0, 0, 0);
 
         assertFalse(plugin.canVote(proposalId, alice, INFTVoting.VoteOption.Yes), "alice held only the old token");
         assertTrue(plugin.canVote(proposalId, bob, INFTVoting.VoteOption.Yes), "bob holds the new token");
@@ -577,11 +568,11 @@ contract NFTVotingTest is TestBase {
         // bob has no NFT => cannot create
         vm.prank(bob);
         vm.expectRevert(abi.encodeWithSelector(INFTVoting.ProposalCreationForbidden.selector, bob));
-        plugin.createProposal("", _dummyActions(), 0, 0, 0, INFTVoting.VoteOption.None, false);
+        plugin.createProposal("", _dummyActions(), 0, 0, 0);
 
         // alice holds an NFT => can create
         vm.prank(alice);
-        plugin.createProposal("", _dummyActions(), 0, 0, 0, INFTVoting.VoteOption.None, false);
+        plugin.createProposal("", _dummyActions(), 0, 0, 0);
     }
 
     function test_CanCreateProposal_ReturnsTrueForEveryoneWhenThresholdIsZero() external {

@@ -52,14 +52,10 @@ contract InstallNFTVotingTest is ForkTestBase {
         receivers[2] = bob;
 
         GovernanceERC721.TokenSettings memory settings = GovernanceERC721.TokenSettings({
-            name: "Existing NFT",
-            symbol: "EXIST",
-            baseURI: "https://example.com/",
-            receivers: receivers
+            name: "Existing NFT", symbol: "EXIST", baseURI: "https://example.com/", receivers: receivers
         });
 
-        GovernanceERC721 existingToken =
-            new GovernanceERC721(IDAO(address(0)), settings);
+        GovernanceERC721 existingToken = new GovernanceERC721(IDAO(address(0)), settings);
 
         InstallParams memory params = _defaultParams();
         params.existingToken = address(existingToken);
@@ -105,7 +101,8 @@ contract InstallNFTVotingTest is ForkTestBase {
         Action[] memory actions = new Action[](1);
         actions[0] = Action({to: address(dao), value: 0, data: abi.encodeCall(DAO.setMetadata, (bytes("e2e-test")))});
 
-        uint256 proposalId = plugin.createProposal("", actions, 0, 0, 0, INFTVoting.VoteOption.Yes, false);
+        uint256 proposalId = plugin.createProposal("", actions, 0, 0, 0);
+        plugin.vote(proposalId, INFTVoting.VoteOption.Yes, false);
 
         (bool openBefore, bool executedBefore,,,,,) = plugin.getProposal(proposalId);
         assertTrue(openBefore, "Proposal should be open right after creation");
