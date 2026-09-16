@@ -279,12 +279,12 @@ abstract contract Proposal is Settings {
 
         proposalId = _createProposalId(keccak256(abi.encode(_actions, _metadata)));
 
-        // Store proposal related information
-        Proposal storage proposal_ = proposals[proposalId];
-
-        if (proposal_.parameters.snapshotTimepoint != 0) {
+        if (_proposalExists(proposalId)) {
             revert ProposalAlreadyExists(proposalId);
         }
+
+        // Store proposal related information
+        Proposal storage proposal_ = proposals[proposalId];
 
         proposal_.parameters.startDate = _startDate;
         proposal_.parameters.endDate = _endDate;
