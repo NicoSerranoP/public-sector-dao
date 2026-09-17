@@ -4,8 +4,6 @@ pragma solidity ^0.8.8;
 
 /* solhint-disable max-line-length */
 
-import {IMembership} from "@aragon/osx-commons-contracts/src/plugin/extensions/membership/IMembership.sol";
-
 import {IVotesUpgradeable} from "@openzeppelin/contracts-upgradeable/governance/utils/IVotesUpgradeable.sol";
 import {IERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
 import {IERC165Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC165Upgradeable.sol";
@@ -25,13 +23,7 @@ import {INFTVoting} from "./INFTVoting.sol";
 /// @title Settings
 /// @author NicoSerranoP (fork of Aragon X 2021-2025)
 /// @notice Holds the voting settings and the voting token, and the logic to update them.
-abstract contract Settings is
-    INFTVoting,
-    IMembership,
-    MetadataExtensionUpgradeable,
-    PluginCloneable,
-    ProposalUpgradeable
-{
+abstract contract Settings is INFTVoting, MetadataExtensionUpgradeable, PluginCloneable, ProposalUpgradeable {
     /// @notice The ID of the permission required to call the `updateVotingSettings` and
     ///     `updateVotingToken` functions.
     bytes32 public constant UPDATE_VOTING_SETTINGS_PERMISSION_ID = keccak256("UPDATE_VOTING_SETTINGS_PERMISSION");
@@ -163,11 +155,7 @@ abstract contract Settings is
     /// @notice Updates the voting token.
     /// @dev Requires the `UPDATE_VOTING_SETTINGS_PERMISSION_ID` permission.
     /// @param _token The new ERC-721 voting token.
-    function updateVotingToken(IVotesUpgradeable _token)
-        external
-        virtual
-        auth(UPDATE_VOTING_SETTINGS_PERMISSION_ID)
-    {
+    function updateVotingToken(IVotesUpgradeable _token) external virtual auth(UPDATE_VOTING_SETTINGS_PERMISSION_ID) {
         _updateVotingToken(_token);
     }
 
@@ -175,14 +163,12 @@ abstract contract Settings is
     /// @param _token The ERC-721 voting token to be validated and set.
     function _updateVotingToken(IVotesUpgradeable _token) internal virtual {
         require(
-            IERC165Upgradeable(address(_token))
-            .supportsInterface(type(IERC721Upgradeable).interfaceId),
+            IERC165Upgradeable(address(_token)).supportsInterface(type(IERC721Upgradeable).interfaceId),
             "token is not a ERC721"
         );
 
         require(
-            IERC165Upgradeable(address(_token))
-            .supportsInterface(type(IVotesUpgradeable).interfaceId),
+            IERC165Upgradeable(address(_token)).supportsInterface(type(IVotesUpgradeable).interfaceId),
             "token is not a Votes Upgradeable (required getVotes and getPastTotalSupply)"
         );
 

@@ -2,12 +2,15 @@
 
 pragma solidity ^0.8.8;
 
+import {IMembership} from "@aragon/osx-commons-contracts/src/plugin/extensions/membership/IMembership.sol";
+import {IERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
+
 import {Proposal} from "./Proposal.sol";
 
 /// @title  Votes
 /// @author NicoSerranoP (fork of Aragon X 2021-2025)
 /// @notice Holds vote-casting and vote-eligibility logic.
-abstract contract Votes is Proposal {
+abstract contract Votes is Proposal, IMembership {
     function vote(uint256 _proposalId, VoteOption _voteOption, bool _tryEarlyExecution) public virtual {
         address account = _msgSender();
 
@@ -118,5 +121,11 @@ abstract contract Votes is Proposal {
         }
 
         return true;
+    }
+
+    /// @inheritdoc IMembership
+    function isMember(address _account) external view returns (bool) {
+        // A member must have at least one token delegated to her/him or own at least one token at current time.
+        return votingToken.getVotes(_account) > 0 || IERC721Upgradeable(address(votingToken)).balanceOf(_account) > 0;
     }
 }

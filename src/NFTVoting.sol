@@ -8,7 +8,6 @@ import {IDAO} from "@aragon/osx/core/dao/DAO.sol";
 import {IMembership} from "@aragon/osx-commons-contracts/src/plugin/extensions/membership/IMembership.sol";
 
 import {IVotesUpgradeable} from "@openzeppelin/contracts-upgradeable/governance/utils/IVotesUpgradeable.sol";
-import {IERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
 
 import {INFTVoting} from "./base/INFTVoting.sol";
 import {Settings} from "./base/Settings.sol";
@@ -58,20 +57,8 @@ contract NFTVoting is Votes {
     /// @notice Checks if this or the parent contract supports an interface by its ID.
     /// @param _interfaceId The ID of the interface.
     /// @return Returns `true` if the interface is supported.
-    function supportsInterface(bytes4 _interfaceId)
-        public
-        view
-        virtual
-        override(Settings)
-        returns (bool)
-    {
+    function supportsInterface(bytes4 _interfaceId) public view virtual override(Settings) returns (bool) {
         return _interfaceId == type(IMembership).interfaceId || _interfaceId == type(INFTVoting).interfaceId
             || _interfaceId == MAJORITY_VOTING_BASE_INTERFACE_ID || super.supportsInterface(_interfaceId);
-    }
-
-    /// @inheritdoc IMembership
-    function isMember(address _account) external view returns (bool) {
-        // A member must have at least one token delegated to her/him or own at least one token at current time.
-        return votingToken.getVotes(_account) > 0 || IERC721Upgradeable(address(votingToken)).balanceOf(_account) > 0;
     }
 }
