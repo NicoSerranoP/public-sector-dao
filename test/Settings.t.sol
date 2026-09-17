@@ -1,0 +1,253 @@
+// SPDX-License-Identifier: UNLICENSED
+pragma solidity 0.8.28;
+
+import {TestBase} from "./lib/TestBase.sol";
+
+import {NFTDAOBuilder} from "./lib/NFTDAOBuilder.sol";
+import {DAO} from "@aragon/osx/core/dao/DAO.sol";
+import {DaoUnauthorized} from "@aragon/osx-commons-contracts/src/permission/auth/auth.sol";
+import {NFTVoting} from "../src/NFTVoting.sol";
+import {GovernanceERC721} from "../src/erc721/GovernanceERC721.sol";
+import {MockGovernanceERC721} from "./mocks/MockGovernanceERC721.sol";
+import {MockPlainERC721} from "./mocks/MockPlainERC721.sol";
+import {INFTVoting} from "../src/base/INFTVoting.sol";
+import {IPlugin} from "@aragon/osx-commons-contracts/src/plugin/IPlugin.sol";
+import {IMembership} from "@aragon/osx-commons-contracts/src/plugin/extensions/membership/IMembership.sol";
+import {IVotesUpgradeable} from "@openzeppelin/contracts-upgradeable/governance/utils/IVotesUpgradeable.sol";
+import {IERC165Upgradeable} from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol";
+import {IDAO} from "@aragon/osx-commons-contracts/src/dao/IDAO.sol";
+import {RatioOutOfBounds} from "@aragon/osx-commons-contracts/src/utils/math/Ratio.sol";
+
+contract SettingsTest is TestBase {
+    DAO dao;
+    NFTVoting plugin;
+    GovernanceERC721 nft;
+
+    /// @dev Builds a DAO + NFTVoting where each entry in `_receivers` gets one NFT.
+    function _build(address[] memory _receivers) internal {
+        IVotesUpgradeable token_;
+        (dao, plugin, token_) = new NFTDAOBuilder().withNewToken(_receivers).build();
+        nft = GovernanceERC721(address(token_));
+    }
+
+    // -----------------------------------------------------------------------
+    // initialize
+    // -----------------------------------------------------------------------
+
+    function test_WhenCallingInitializeOnAnAlreadyInitializedPlugin() external {
+        _build(_one(ALICE));
+
+        vm.expectRevert("Initializable: contract is already initialized");
+        plugin.initialize(
+            dao,
+            INFTVoting.VotingSettings({
+                votingMode: INFTVoting.VotingMode.Standard,
+                supportThreshold: 500_000,
+                minParticipation: 100_000,
+                minDuration: ONE_HOUR,
+                minProposerVotingPower: 0,
+                minApprovals: 1
+            }),
+            IVotesUpgradeable(address(nft)),
+            IPlugin.TargetConfig(address(dao), IPlugin.Operation.Call),
+            ""
+        );
+    }
+
+    function test_WhenTheTokenIsNotAnERC721_InitializeReverts() external {
+        NFTDAOBuilder builder = new NFTDAOBuilder();
+        // A plain DAO implements ERC-165 but not the ERC-721 interface.
+        builder.withToken(IVotesUpgradeable(address(new DAO())));
+
+        vm.expectRevert("token is not a ERC721");
+        builder.build();
+    }
+
+    function test_WhenInitialized_ItAnnouncesTheMembershipContractAndUsesBlockNumberClock() external {
+        _build(_one(ALICE));
+
+        assertEq(address(plugin.getVotingToken()), address(nft));
+        assertFalse(plugin.tokenIndexedByTimestamp(), "ERC721Votes default clock is block number");
+    }
+
+    // -----------------------------------------------------------------------
+    // ERC-165
+    // -----------------------------------------------------------------------
+
+    function test_WhenQueryingSupportsInterface() external {
+        _build(_one(ALICE));
+
+        assertTrue(plugin.supportsInterface(type(IERC165Upgradeable).interfaceId));
+        assertTrue(plugin.supportsInterface(type(IMembership).interfaceId));
+        assertTrue(plugin.supportsInterface(type(INFTVoting).interfaceId));
+        assertFalse(plugin.supportsInterface(0xffffffff));
+    }
+
+    // -----------------------------------------------------------------------
+    // voting settings
+    // -----------------------------------------------------------------------
+
+    function test_WhenAnUnauthorizedAccountUpdatesSettings_ItReverts() external {
+        _build(_one(ALICE));
+
+        INFTVoting.VotingSettings memory settings = INFTVoting.VotingSettings({
+            votingMode: INFTVoting.VotingMode.Standard,
+            supportThreshold: 500_000,
+            minParticipation: 100_000,
+            minDuration: ONE_HOUR,
+            minProposerVotingPower: 0,
+            minApprovals: 1
+        });
+
+        bytes memory expectedErr = abi.encodeWithSelector(
+            DaoUnauthorized.selector, address(dao), address(plugin), BOB, plugin.UPDATE_VOTING_SETTINGS_PERMISSION_ID()
+        );
+
+        vm.prank(BOB);
+        vm.expectRevert(expectedErr);
+        plugin.updateVotingSettings(settings);
+    }
+
+    function test_WhenSupportThresholdIsOutOfBounds_ItReverts() external {
+        _build(_one(ALICE));
+
+        INFTVoting.VotingSettings memory settings = INFTVoting.VotingSettings({
+            votingMode: INFTVoting.VotingMode.Standard,
+            supportThreshold: RATIO_BASE, // must be < RATIO_BASE
+            minParticipation: 100_000,
+            minDuration: ONE_HOUR,
+            minProposerVotingPower: 0,
+            minApprovals: 1
+        });
+
+        dao.grant(address(plugin), address(this), plugin.UPDATE_VOTING_SETTINGS_PERMISSION_ID());
+        vm.expectRevert(abi.encodeWithSelector(RatioOutOfBounds.selector, RATIO_BASE - 1, RATIO_BASE));
+        plugin.updateVotingSettings(settings);
+    }
+
+    function test_WhenSupportThresholdIsZero_ItReverts() external {
+        _build(_one(ALICE));
+
+        INFTVoting.VotingSettings memory settings = INFTVoting.VotingSettings({
+            votingMode: INFTVoting.VotingMode.Standard,
+            supportThreshold: 0,
+            minParticipation: 100_000,
+            minDuration: ONE_HOUR,
+            minProposerVotingPower: 0,
+            minApprovals: 1
+        });
+
+        dao.grant(address(plugin), address(this), plugin.UPDATE_VOTING_SETTINGS_PERMISSION_ID());
+        vm.expectRevert(abi.encodeWithSelector(RatioOutOfBounds.selector, RATIO_BASE - 1, 0));
+        plugin.updateVotingSettings(settings);
+    }
+
+    function test_WhenMinParticipationIsZero_ItReverts() external {
+        _build(_one(ALICE));
+
+        INFTVoting.VotingSettings memory settings = INFTVoting.VotingSettings({
+            votingMode: INFTVoting.VotingMode.Standard,
+            supportThreshold: 500_000,
+            minParticipation: 0,
+            minDuration: ONE_HOUR,
+            minProposerVotingPower: 0,
+            minApprovals: 1
+        });
+
+        dao.grant(address(plugin), address(this), plugin.UPDATE_VOTING_SETTINGS_PERMISSION_ID());
+        vm.expectRevert(abi.encodeWithSelector(RatioOutOfBounds.selector, RATIO_BASE, 0));
+        plugin.updateVotingSettings(settings);
+    }
+
+    function test_WhenMinApprovalIsZero_ItReverts() external {
+        _build(_one(ALICE));
+
+        INFTVoting.VotingSettings memory settings = INFTVoting.VotingSettings({
+            votingMode: INFTVoting.VotingMode.Standard,
+            supportThreshold: 500_000,
+            minParticipation: 100_000,
+            minDuration: ONE_HOUR,
+            minProposerVotingPower: 0,
+            minApprovals: 0
+        });
+
+        dao.grant(address(plugin), address(this), plugin.UPDATE_VOTING_SETTINGS_PERMISSION_ID());
+        vm.expectRevert(abi.encodeWithSelector(RatioOutOfBounds.selector, RATIO_BASE, 0));
+        plugin.updateVotingSettings(settings);
+    }
+
+    // -----------------------------------------------------------------------
+    // voting token updates
+    // -----------------------------------------------------------------------
+
+    function test_WhenAnUnauthorizedAccountUpdatesTheVotingToken_ItReverts() external {
+        _build(_one(ALICE));
+
+        GovernanceERC721.TokenSettings memory settings = GovernanceERC721.TokenSettings({
+            name: "New NFT", symbol: "NEW", baseURI: "https://example.com/", receivers: _one(ALICE)
+        });
+        GovernanceERC721 newToken = new GovernanceERC721(IDAO(address(dao)), settings);
+
+        bytes memory expectedErr = abi.encodeWithSelector(
+            DaoUnauthorized.selector, address(dao), address(plugin), BOB, plugin.UPDATE_VOTING_SETTINGS_PERMISSION_ID()
+        );
+
+        vm.prank(BOB);
+        vm.expectRevert(expectedErr);
+        plugin.updateVotingToken(IVotesUpgradeable(address(newToken)));
+    }
+
+    function test_WhenTheNewVotingTokenIsNotAnERC721_ItReverts() external {
+        _build(_one(ALICE));
+
+        // A plain DAO implements ERC-165 but not the ERC-721 interface.
+        IVotesUpgradeable notAnNft = IVotesUpgradeable(address(new DAO()));
+
+        dao.grant(address(plugin), address(this), plugin.UPDATE_VOTING_SETTINGS_PERMISSION_ID());
+
+        vm.expectRevert("token is not a ERC721");
+        plugin.updateVotingToken(notAnNft);
+    }
+
+    function test_WhenTheNewVotingTokenIsNotVotesUpgradeable_ItReverts() external {
+        _build(_one(ALICE));
+
+        // An ERC-721 without the Votes-Upgradeable interface.
+        IVotesUpgradeable notVotesUpgradeable = IVotesUpgradeable(address(new MockPlainERC721()));
+
+        dao.grant(address(plugin), address(this), plugin.UPDATE_VOTING_SETTINGS_PERMISSION_ID());
+
+        vm.expectRevert("token is not a Votes Upgradeable (required getVotes and getPastTotalSupply)");
+        plugin.updateVotingToken(notVotesUpgradeable);
+    }
+
+    function test_WhenAnAuthorizedAccountUpdatesTheVotingToken_ItReplacesTheExistingToken() external {
+        _build(_one(ALICE));
+
+        GovernanceERC721.TokenSettings memory settings = GovernanceERC721.TokenSettings({
+            name: "New NFT", symbol: "NEW", baseURI: "https://example.com/", receivers: _one(BOB)
+        });
+        GovernanceERC721 newToken = new GovernanceERC721(IDAO(address(dao)), settings);
+
+        vm.roll(block.number + 1);
+        vm.warp(block.timestamp + 1);
+
+        dao.grant(address(plugin), address(this), plugin.UPDATE_VOTING_SETTINGS_PERMISSION_ID());
+
+        vm.expectEmit(true, true, true, true, address(plugin));
+        emit INFTVoting.VotingTokenUpdated(address(newToken));
+        plugin.updateVotingToken(IVotesUpgradeable(address(newToken)));
+
+        assertEq(address(plugin.getVotingToken()), address(newToken), "voting token should be replaced");
+
+        // The old token's voting power should no longer count.
+        assertEq(plugin.totalVotingPower(block.number - 1), 1, "only the new token's supply should count");
+
+        // A holder of the new (but not the old) token can now vote.
+        vm.prank(BOB);
+        uint256 proposalId = plugin.createProposal("", _dummyActions(), 0, 0, 0);
+
+        assertFalse(plugin.canVote(proposalId, ALICE, INFTVoting.VoteOption.Yes), "alice held only the old token");
+        assertTrue(plugin.canVote(proposalId, BOB, INFTVoting.VoteOption.Yes), "bob holds the new token");
+    }
+}
