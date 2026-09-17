@@ -34,12 +34,7 @@ import {IDAO} from "@aragon/osx-commons-contracts/src/dao/IDAO.sol";
 ///     without extra user action, the contract self-delegates any receiver that has no delegate yet
 ///     (on mint and on transfer). Holders can override this at any time by calling `delegate`.
 /// @custom:security-contact sirt@aragon.org
-contract GovernanceERC721 is
-    Initializable,
-    ERC165Upgradeable,
-    ERC721VotesUpgradeable,
-    DaoAuthorizableUpgradeable
-{
+contract GovernanceERC721 is Initializable, ERC165Upgradeable, ERC721VotesUpgradeable, DaoAuthorizableUpgradeable {
     /// @notice The permission identifier to mint new tokens.
     bytes32 public constant MINT_PERMISSION_ID = keccak256("MINT_PERMISSION");
 
@@ -86,10 +81,7 @@ contract GovernanceERC721 is
     /// @notice Initializes the contract and mints one token per entry in `_settings.receivers`.
     /// @param _dao The managing DAO.
     /// @param _settings Token settings for initialization
-    function initialize(IDAO _dao, TokenSettings memory _settings)
-        public
-        initializer
-    {
+    function initialize(IDAO _dao, TokenSettings memory _settings) public initializer {
         __ERC721_init(_settings.name, _settings.symbol);
         // `ERC721Votes` relies on `EIP712` for `delegateBySig`, so it must be initialized explicitly.
         __EIP712_init(_settings.name, "1");
@@ -119,8 +111,7 @@ contract GovernanceERC721 is
         return _interfaceId == type(IERC721Upgradeable).interfaceId
             || _interfaceId == type(IERC721MetadataUpgradeable).interfaceId
             || _interfaceId == type(IVotesUpgradeable).interfaceId
-            || _interfaceId == type(IERC6372Upgradeable).interfaceId
-            || super.supportsInterface(_interfaceId);
+            || _interfaceId == type(IERC6372Upgradeable).interfaceId || super.supportsInterface(_interfaceId);
     }
 
     /// @notice Mints a single [ERC-721](https://eips.ethereum.org/EIPS/eip-721) token for a receiving address.
@@ -176,6 +167,7 @@ contract GovernanceERC721 is
 
     /// @notice Returns the base URI for the token metadata.
     /// @return Returns the single base URI
+    // forge-lint: disable-next-line(mixed-case-function)
     function _baseURI() internal view override returns (string memory) {
         return baseTokenURI;
     }
@@ -188,7 +180,14 @@ contract GovernanceERC721 is
 
     /// @notice Updates the base URI for the token metadata.
     /// @param _baseTokenURI The new base URI to set.
-    function setBaseURI(string memory _baseTokenURI) external virtual auth(UPDATE_BASE_URI_ID) {
+    function setBaseURI(
+        // forge-lint: disable-next-line(mixed-case-variable)
+        string memory _baseTokenURI
+    )
+        external
+        virtual
+        auth(UPDATE_BASE_URI_ID)
+    {
         baseTokenURI = _baseTokenURI;
     }
 }

@@ -28,6 +28,7 @@ abstract contract Proposal is Settings {
     // solhint-disable-next-line named-parameters-mapping
     mapping(uint256 => Proposal) internal proposals;
 
+    // forge-lint: disable-next-item(unwrapped-modifier-logic)
     modifier onlyIfProposalExists(uint256 _proposalId) {
         if (!_proposalExists(_proposalId)) {
             revert NonexistentProposal(_proposalId);
@@ -343,6 +344,7 @@ abstract contract Proposal is Settings {
     }
 
     /// @inheritdoc IProposal
+    // forge-lint: disable-next-line(mixed-case-function)
     function customProposalParamsABI() external pure override returns (string memory) {
         return "(uint256 allowFailureMap)";
     }
