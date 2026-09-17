@@ -25,7 +25,7 @@ contract InstallNFTVotingTest is ForkTestBase {
 
     function test_WhenCreatingANewDaoWithANewToken() external {
         (DAO dao, NFTVoting plugin, IVotesUpgradeable token) =
-            script.createDaoAndInstall(daoFactory, _daoSettings(), _defaultParams());
+            script.createDaoAndInstall(DAO_FACTORY, _daoSettings(), _defaultParams());
 
         assertTrue(
             dao.isGranted(address(dao), address(plugin), dao.EXECUTE_PERMISSION_ID(), ""), "Plugin should be installed"
@@ -47,9 +47,9 @@ contract InstallNFTVotingTest is ForkTestBase {
 
     function test_WhenCreatingANewDaoWithAnExistingToken() external {
         address[] memory receivers = new address[](3);
-        receivers[0] = alice;
-        receivers[1] = alice;
-        receivers[2] = bob;
+        receivers[0] = ALICE;
+        receivers[1] = ALICE;
+        receivers[2] = BOB;
 
         GovernanceERC721.TokenSettings memory settings = GovernanceERC721.TokenSettings({
             name: "Existing NFT", symbol: "EXIST", baseURI: "https://example.com/", receivers: receivers
@@ -61,15 +61,15 @@ contract InstallNFTVotingTest is ForkTestBase {
         params.existingToken = address(existingToken);
 
         (DAO dao, NFTVoting plugin, IVotesUpgradeable token) =
-            script.createDaoAndInstall(daoFactory, _daoSettings(), params);
+            script.createDaoAndInstall(DAO_FACTORY, _daoSettings(), params);
 
         assertTrue(
             dao.isGranted(address(dao), address(plugin), dao.EXECUTE_PERMISSION_ID(), ""), "Plugin should be installed"
         );
         assertEq(address(token), address(existingToken), "The plugin should use the provided token");
-        assertTrue(plugin.isMember(alice), "Alice should be a member");
-        assertTrue(plugin.isMember(bob), "Bob should be a member");
-        assertFalse(plugin.isMember(carol), "Carol should not be a member");
+        assertTrue(plugin.isMember(ALICE), "Alice should be a member");
+        assertTrue(plugin.isMember(BOB), "Bob should be a member");
+        assertFalse(plugin.isMember(CAROL), "Carol should not be a member");
     }
 
     function test_WhenInstallingOnAnExistingDao() external {
@@ -89,7 +89,7 @@ contract InstallNFTVotingTest is ForkTestBase {
         InstallParams memory params = _defaultParams();
         params.nftCount = 3;
 
-        (DAO dao, NFTVoting plugin,) = script.createDaoAndInstall(daoFactory, _daoSettings(), params);
+        (DAO dao, NFTVoting plugin,) = script.createDaoAndInstall(DAO_FACTORY, _daoSettings(), params);
 
         // Move past the mint's checkpoint so the proposal's voting-power snapshot sees it.
         vm.roll(block.number + 1);

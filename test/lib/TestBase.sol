@@ -2,23 +2,17 @@
 pragma solidity ^0.8.17;
 
 import {Test} from "forge-std/Test.sol";
-import {DAO} from "@aragon/osx/core/dao/DAO.sol";
-import {IPluginSetup, PluginSetup} from "@aragon/osx/framework/plugin/setup/PluginSetupProcessor.sol";
 import {Action} from "@aragon/osx-commons-contracts/src/executors/IExecutor.sol";
-import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
-import {IVotesUpgradeable} from "@openzeppelin/contracts-upgradeable/governance/utils/IVotesUpgradeable.sol";
 
-import {NFTVoting} from "../../src/NFTVoting.sol";
-import {GovernanceERC721} from "../../src/erc721/GovernanceERC721.sol";
 import {ALICE_ADDRESS, BOB_ADDRESS, CAROL_ADDRESS, DAVID_ADDRESS} from "../constants.sol";
 
 contract TestBase is Test {
     // Convenience actors for testing
-    address immutable alice = ALICE_ADDRESS;
-    address immutable bob = BOB_ADDRESS;
-    address immutable carol = CAROL_ADDRESS;
-    address immutable david = DAVID_ADDRESS;
-    address immutable randomAddress = vm.addr(1234567890);
+    address immutable ALICE = ALICE_ADDRESS;
+    address immutable BOB = BOB_ADDRESS;
+    address immutable CAROL = CAROL_ADDRESS;
+    address immutable DAVID = DAVID_ADDRESS;
+    address immutable RANDOM_ADDRESS = vm.addr(1234567890);
 
     uint64 constant ONE_HOUR = 3600;
     uint32 constant RATIO_BASE = 1_000_000;
@@ -27,11 +21,11 @@ contract TestBase is Test {
         vm.roll(10);
         vm.warp(100_000);
 
-        vm.label(alice, "Alice");
-        vm.label(bob, "Bob");
-        vm.label(carol, "Carol");
-        vm.label(david, "David");
-        vm.label(randomAddress, "Random wallet");
+        vm.label(ALICE, "Alice");
+        vm.label(BOB, "Bob");
+        vm.label(CAROL, "Carol");
+        vm.label(DAVID, "David");
+        vm.label(RANDOM_ADDRESS, "Random wallet");
 
         // Assume that we are testing on Sepolia (used to compute proposal ID's)
         vm.chainId(11155111);
