@@ -21,9 +21,6 @@ import {IDAO} from "@aragon/osx-commons-contracts/src/dao/IDAO.sol";
 import {RatioOutOfBounds} from "@aragon/osx-commons-contracts/src/utils/math/Ratio.sol";
 
 contract NFTVotingTest is TestBase {
-    uint64 constant ONE_HOUR = 3600;
-    uint32 constant RATIO_BASE = 1_000_000;
-
     DAO dao;
     NFTVoting plugin;
     GovernanceERC721 nft;
@@ -33,15 +30,6 @@ contract NFTVotingTest is TestBase {
         IVotesUpgradeable token_;
         (dao, plugin, token_) = new NFTDAOBuilder().withNewToken(_receivers).build();
         nft = GovernanceERC721(address(token_));
-    }
-
-    function _one(address _a) internal pure returns (address[] memory arr) {
-        arr = new address[](1);
-        arr[0] = _a;
-    }
-
-    function _dummyActions() internal pure returns (Action[] memory actions) {
-        actions = new Action[](0);
     }
 
     // -----------------------------------------------------------------------
