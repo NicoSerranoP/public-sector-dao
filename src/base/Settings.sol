@@ -180,23 +180,12 @@ abstract contract Settings is INFTVoting, MetadataExtensionUpgradeable, PluginCl
     }
 
     /// @dev Helper function to identify the clock mode used by the given voting token.
+    /// @dev `clock()`'s return value determines how the token indexes its checkpoints
     function _detectTokenClock() private {
-        bool clockModeTimestamp;
-        bool clockTimestamp;
-
-        try IERC6372Upgradeable(address(votingToken)).CLOCK_MODE() returns (string memory clockMode) {
-            clockModeTimestamp = keccak256(bytes(clockMode)) == keccak256(bytes("mode=timestamp"));
-        } catch {}
         try IERC6372Upgradeable(address(votingToken)).clock() returns (uint48 timePoint) {
-            clockTimestamp = (timePoint == block.timestamp);
-        } catch {}
-
-        if (clockModeTimestamp != clockTimestamp) {
-            revert TokenClockMismatch();
-        } else if (clockModeTimestamp) {
-            tokenIndexedByTimestamp = true;
-        } else {
-            // Assuming that the token indexes by block number
+            tokenIndexedByTimestamp = (timePoint == block.timestamp);
+        } catch {
+            // Assuming that the token indexes by block number (the ERC-6372 default)
             tokenIndexedByTimestamp = false;
         }
     }

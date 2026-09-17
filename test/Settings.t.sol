@@ -8,8 +8,9 @@ import {DAO} from "@aragon/osx/core/dao/DAO.sol";
 import {DaoUnauthorized} from "@aragon/osx-commons-contracts/src/permission/auth/auth.sol";
 import {NFTVoting} from "../src/NFTVoting.sol";
 import {GovernanceERC721} from "../src/erc721/GovernanceERC721.sol";
-import {MockGovernanceERC721} from "./mocks/MockGovernanceERC721.sol";
 import {MockPlainERC721} from "./mocks/MockPlainERC721.sol";
+import {MockTimestampClockToken} from "./mocks/MockTimestampClockToken.sol";
+import {MockBlockNumberClockToken} from "./mocks/MockBlockNumberClockToken.sol";
 import {INFTVoting} from "../src/base/INFTVoting.sol";
 import {IPlugin} from "@aragon/osx-commons-contracts/src/plugin/IPlugin.sol";
 import {IMembership} from "@aragon/osx-commons-contracts/src/plugin/extensions/membership/IMembership.sol";
@@ -249,5 +250,64 @@ contract SettingsTest is TestBase {
 
         assertFalse(plugin.canVote(proposalId, ALICE, INFTVoting.VoteOption.Yes), "alice held only the old token");
         assertTrue(plugin.canVote(proposalId, BOB, INFTVoting.VoteOption.Yes), "bob holds the new token");
+    }
+
+    // -----------------------------------------------------------------------
+    // clock detection (adversarial)
+    // -----------------------------------------------------------------------
+    //
+
+    function test_WhenTheTokenHasACanonicalTimestampClock_ItIsDetectedAsTimestampIndexed() external {
+        GovernanceERC721.TokenSettings memory settings = GovernanceERC721.TokenSettings({
+            name: "NFT with CLOCK=blocknumber", symbol: "NEW", baseURI: "https://example.com/", receivers: _one(ALICE)
+        });
+
+        MockTimestampClockToken token_ = new MockTimestampClockToken(IDAO(address(0)), settings);
+
+        (dao, plugin,) = new NFTDAOBuilder().withToken(IVotesUpgradeable(address(token_))).build();
+
+        assertTrue(plugin.tokenIndexedByTimestamp(), "clock() returns block.timestamp");
+    }
+
+    function test_WhenTheTokenHasBlockNumberClock_ItIsDetectedAsBlockNumberIndexed() external {
+        GovernanceERC721.TokenSettings memory settings = GovernanceERC721.TokenSettings({
+            name: "NFT with CLOCK=timestamp", symbol: "NEW", baseURI: "https://example.com/", receivers: _one(ALICE)
+        });
+
+        MockBlockNumberClockToken token_ = new MockBlockNumberClockToken(IDAO(address(0)), settings);
+
+        (dao, plugin,) = new NFTDAOBuilder().withToken(IVotesUpgradeable(address(token_))).build();
+
+        assertFalse(plugin.tokenIndexedByTimestamp(), "clock() returns block.number");
+    }
+
+    /// @dev End-to-end proof that a detected timestamp-indexed token is not just flagged correctly,
+    ///     but that snapshots, `createProposal` and `canVote` all behave correctly when driven by
+    ///     `vm.warp` instead of `vm.roll`
+    function test_WhenTheVotingTokenIsTimestampIndexed_TheFullProposalLifecycleUsesTimestamps() external {
+        GovernanceERC721.TokenSettings memory settings = GovernanceERC721.TokenSettings({
+            name: "NFT with .clock()", symbol: "NEW", baseURI: "https://example.com/", receivers: _one(ALICE)
+        });
+
+        MockTimestampClockToken token_ = new MockTimestampClockToken(IDAO(address(0)), settings);
+
+        (dao, plugin,) = new NFTDAOBuilder().withToken(IVotesUpgradeable(address(token_))).build();
+        assertTrue(plugin.tokenIndexedByTimestamp());
+
+        // Advance only the timestamp (not the block number) to checkpoint the snapshot.
+        vm.warp(block.timestamp + 1);
+
+        vm.prank(ALICE);
+        uint256 proposalId = plugin.createProposal("", _dummyActions(), 0, 0, 0);
+
+        assertTrue(
+            plugin.canVote(proposalId, ALICE, INFTVoting.VoteOption.Yes), "alice's timestamp-indexed vote counts"
+        );
+
+        vm.prank(ALICE);
+        plugin.vote(proposalId, INFTVoting.VoteOption.Yes, false);
+
+        (,,, INFTVoting.Tally memory tally,,,) = plugin.getProposal(proposalId);
+        assertEq(tally.yes, 1, "vote correctly tallied under timestamp indexing");
     }
 }

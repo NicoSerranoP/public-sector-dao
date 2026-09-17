@@ -168,9 +168,6 @@ interface INFTVoting {
     /// @param proposalId The id of the proposal.
     error ProposalAlreadyExists(uint256 proposalId);
 
-    /// @notice Thrown if the token reports an inconsistent clock mode and clock value
-    error TokenClockMismatch();
-
     /// @notice Thrown if the voting power is zero
     error NoVotingPower();
 
