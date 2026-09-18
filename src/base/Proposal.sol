@@ -392,6 +392,13 @@ abstract contract Proposal is Settings {
             if (endDate < earliestEndDate) {
                 revert DateOutOfBounds({limit: earliestEndDate, actual: endDate});
             }
+
+            // Mirrors the 1-year ceiling already enforced on `minDuration` in `Settings`
+            uint64 latestEndDate = startDate + 365 days;
+
+            if (endDate > latestEndDate) {
+                revert DateOutOfBounds({limit: latestEndDate, actual: endDate});
+            }
         }
     }
 }
