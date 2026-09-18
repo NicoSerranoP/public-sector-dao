@@ -129,8 +129,8 @@ abstract contract Settings is INFTVoting, MetadataExtensionUpgradeable, PluginCl
             revert MinDurationOutOfBounds({limit: 60 minutes, actual: _votingSettings.minDuration});
         }
 
-        if (_votingSettings.minDuration > 365 days) {
-            revert MinDurationOutOfBounds({limit: 365 days, actual: _votingSettings.minDuration});
+        if (_votingSettings.minDuration > _votingSettings.maxBoundDate) {
+            revert MinDurationOutOfBounds({limit: _votingSettings.maxBoundDate, actual: _votingSettings.minDuration});
         }
 
         // Require the minimum approval value to be in the interval [1, 10^6],
@@ -146,6 +146,7 @@ abstract contract Settings is INFTVoting, MetadataExtensionUpgradeable, PluginCl
             supportThreshold: _votingSettings.supportThreshold,
             minParticipation: _votingSettings.minParticipation,
             minDuration: _votingSettings.minDuration,
+            maxBoundDate: _votingSettings.maxBoundDate,
             minProposerVotingPower: _votingSettings.minProposerVotingPower,
             minApprovals: _votingSettings.minApprovals
         });

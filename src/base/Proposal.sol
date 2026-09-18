@@ -385,14 +385,14 @@ abstract contract Proposal is Settings {
                 revert DateOutOfBounds({limit: currentTimestamp, actual: startDate});
             }
 
-            if (startDate > currentTimestamp + 365 days) {
-                revert DateOutOfBounds({limit: currentTimestamp + 365 days, actual: startDate});
+            if (startDate > currentTimestamp + votingSettings.maxBoundDate) {
+                revert DateOutOfBounds({limit: currentTimestamp + votingSettings.maxBoundDate, actual: startDate});
             }
         }
 
         // Since `minDuration` is limited to 1 year,
         // `startDate + minDuration` can only overflow if the `startDate` is after `type(uint64).max - minDuration`.
-        // In this case, the proposal creation will revert and another date can be picked.
+        // In this case with Solidity 0.8+ overflow checks, the proposal creation will revert and another date can be picked.
         uint64 earliestEndDate = startDate + votingSettings.minDuration;
 
         if (_end == 0) {
@@ -404,8 +404,8 @@ abstract contract Proposal is Settings {
                 revert DateOutOfBounds({limit: earliestEndDate, actual: endDate});
             }
 
-            // Mirrors the 1-year ceiling already enforced on `minDuration` in `Settings`
-            uint64 latestEndDate = startDate + 365 days;
+            // Mirrors the configurable ceiling already enforced on `minDuration` in `Settings`
+            uint64 latestEndDate = startDate + votingSettings.maxBoundDate;
 
             if (endDate > latestEndDate) {
                 revert DateOutOfBounds({limit: latestEndDate, actual: endDate});

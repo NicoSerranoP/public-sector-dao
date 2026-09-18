@@ -153,6 +153,7 @@ contract NFTDAOBuilder is TestBase {
             supportThreshold: supportThreshold,
             minParticipation: minParticipation,
             minDuration: minDuration,
+            maxBoundDate: 365 days,
             minProposerVotingPower: minProposerVotingPower,
             minApprovals: minApprovals
         });

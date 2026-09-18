@@ -141,6 +141,7 @@ contract InstallNFTVotingTest is ForkTestBase {
             supportThreshold: 500_000,
             minParticipation: 100_000,
             minDuration: 1 hours,
+            maxBoundDate: 365 days,
             minProposerVotingPower: 0,
             minApprovals: 1
         });

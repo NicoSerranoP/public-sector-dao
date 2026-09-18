@@ -46,6 +46,7 @@ interface INFTVoting {
     /// @param minParticipation The minimum participation value.
     ///     Its value has to be in the interval [0, 10^6] defined by `RATIO_BASE = 10**6`.
     /// @param minDuration The minimum duration of the proposal vote in seconds.
+    /// @param maxBoundDate The maximum allowed offset in seconds for proposal start/end dates.
     /// @param minProposerVotingPower The minimum voting power required to create a proposal.
     /// @param minApprovals The minimum ratio of yes votes needed for a proposal to succeed.
     ///     Its value has to be in the interval [0, 10^6] defined by `RATIO_BASE = 10**6`.
@@ -54,6 +55,7 @@ interface INFTVoting {
         uint32 supportThreshold;
         uint32 minParticipation;
         uint64 minDuration;
+        uint64 maxBoundDate;
         uint256 minProposerVotingPower;
         uint256 minApprovals;
     }
@@ -123,6 +125,7 @@ interface INFTVoting {
     /// @param supportThreshold The support threshold value.
     /// @param minParticipation The minimum participation value.
     /// @param minDuration The minimum duration of the proposal vote in seconds.
+    /// @param maxBoundDate The maximum allowed offset in seconds for proposal start/end dates.
     /// @param minProposerVotingPower The minimum voting power required to create a proposal.
     /// @param minApprovals The minimum ratio of yes votes needed for a proposal to succeed.
     event VotingSettingsUpdated(
@@ -130,6 +133,7 @@ interface INFTVoting {
         uint32 supportThreshold,
         uint32 minParticipation,
         uint64 minDuration,
+        uint64 maxBoundDate,
         uint256 minProposerVotingPower,
         uint256 minApprovals
     );

@@ -46,6 +46,7 @@ contract SettingsTest is TestBase {
                 supportThreshold: 500_000,
                 minParticipation: 100_000,
                 minDuration: ONE_HOUR,
+                maxBoundDate: 365 days,
                 minProposerVotingPower: 0,
                 minApprovals: 1
             }),
@@ -96,6 +97,7 @@ contract SettingsTest is TestBase {
             supportThreshold: 500_000,
             minParticipation: 100_000,
             minDuration: ONE_HOUR,
+            maxBoundDate: 365 days,
             minProposerVotingPower: 0,
             minApprovals: 1
         });
@@ -117,6 +119,7 @@ contract SettingsTest is TestBase {
             supportThreshold: RATIO_BASE, // must be < RATIO_BASE
             minParticipation: 100_000,
             minDuration: ONE_HOUR,
+            maxBoundDate: 365 days,
             minProposerVotingPower: 0,
             minApprovals: 1
         });
@@ -134,6 +137,7 @@ contract SettingsTest is TestBase {
             supportThreshold: 0,
             minParticipation: 100_000,
             minDuration: ONE_HOUR,
+            maxBoundDate: 365 days,
             minProposerVotingPower: 0,
             minApprovals: 1
         });
@@ -151,6 +155,7 @@ contract SettingsTest is TestBase {
             supportThreshold: 500_000,
             minParticipation: 0,
             minDuration: ONE_HOUR,
+            maxBoundDate: 365 days,
             minProposerVotingPower: 0,
             minApprovals: 1
         });
@@ -168,6 +173,7 @@ contract SettingsTest is TestBase {
             supportThreshold: 500_000,
             minParticipation: 100_000,
             minDuration: ONE_HOUR,
+            maxBoundDate: 365 days,
             minProposerVotingPower: 0,
             minApprovals: 0
         });
