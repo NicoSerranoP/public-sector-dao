@@ -9,7 +9,7 @@ import {DAOFactory} from "@aragon/osx/framework/dao/DAOFactory.sol";
 import {PermissionManager} from "@aragon/osx/core/permission/PermissionManager.sol";
 import {Action} from "@aragon/osx-commons-contracts/src/executors/IExecutor.sol";
 import {IPlugin} from "@aragon/osx-commons-contracts/src/plugin/IPlugin.sol";
-import {ProxyLib} from "@aragon/osx-commons-contracts/src/utils/deployment/ProxyLib.sol";
+import {ProxyFactory} from "@aragon/osx-commons-contracts/src/utils/deployment/ProxyFactory.sol";
 import {IVotesUpgradeable} from "@openzeppelin/contracts-upgradeable/governance/utils/IVotesUpgradeable.sol";
 
 import {NFTVoting} from "../src/NFTVoting.sol";
@@ -44,7 +44,6 @@ struct InstallParams {
  */
 contract InstallNFTVotingScript is Script {
     using stdJson for string;
-    using ProxyLib for address;
 
     address private constant ANY_ADDR = address(type(uint160).max);
 
@@ -171,8 +170,9 @@ contract InstallNFTVotingScript is Script {
         }
 
         address nftVotingBase = address(new NFTVoting());
+        ProxyFactory proxyFactory = new ProxyFactory(nftVotingBase);
         plugin_ = NFTVoting(
-            nftVotingBase.deployMinimalProxy(
+            proxyFactory.deployMinimalProxy(
                 abi.encodeCall(
                     NFTVoting.initialize,
                     (IDAO(address(_dao)), _params.votingSettings, _token, targetConfig, _params.pluginMetadata)
