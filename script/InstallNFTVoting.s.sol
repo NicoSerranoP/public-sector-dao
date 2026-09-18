@@ -165,6 +165,11 @@ contract InstallNFTVotingScript is Script {
         returns (NFTVoting plugin_)
     {
         IPlugin.TargetConfig memory targetConfig = _params.targetConfig;
+        require(
+            targetConfig.operation == IPlugin.Operation.Call,
+            "Only Call operation is enable for NFTVoting target configs"
+        );
+
         if (targetConfig.target == address(0)) {
             targetConfig.target = address(_dao);
         }

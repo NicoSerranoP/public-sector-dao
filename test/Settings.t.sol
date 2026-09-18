@@ -363,4 +363,15 @@ contract SettingsTest is TestBase {
         (,,, INFTVoting.Tally memory tally,,,) = plugin.getProposal(proposalId);
         assertEq(tally.yes, 1, "vote correctly tallied under timestamp indexing");
     }
+
+    function test_WhenTargetConfigUsesDelegateCall_ItReverts() external {
+        _build(_one(ALICE));
+
+        dao.grant(address(plugin), address(this), plugin.SET_TARGET_CONFIG_PERMISSION_ID());
+
+        vm.expectRevert();
+        plugin.setTargetConfig(
+            IPlugin.TargetConfig({target: address(new DAO()), operation: IPlugin.Operation.DelegateCall})
+        );
+    }
 }

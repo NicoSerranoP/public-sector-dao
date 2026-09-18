@@ -8,6 +8,7 @@ import {IVotesUpgradeable} from "@openzeppelin/contracts-upgradeable/governance/
 import {IERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
 import {IERC165Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC165Upgradeable.sol";
 import {IERC6372Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC6372Upgradeable.sol";
+import {IPlugin} from "@aragon/osx-commons-contracts/src/plugin/IPlugin.sol";
 
 import {
     ProposalUpgradeable
@@ -157,6 +158,16 @@ abstract contract Settings is INFTVoting, MetadataExtensionUpgradeable, PluginCl
     /// @param _token The new ERC-721 voting token.
     function updateVotingToken(IVotesUpgradeable _token) external virtual auth(UPDATE_VOTING_SETTINGS_PERMISSION_ID) {
         _updateVotingToken(_token);
+    }
+
+    /// @notice Updates the target configuration.
+    /// @dev Rejects delegatecall targets so proposal execution cannot mutate plugin storage.
+    function _setTargetConfig(IPlugin.TargetConfig memory _targetConfig) internal virtual override {
+        if (_targetConfig.operation == IPlugin.Operation.DelegateCall) {
+            revert InvalidTargetConfig(_targetConfig);
+        }
+
+        super._setTargetConfig(_targetConfig);
     }
 
     /// @notice Internal function to update the voting token.
