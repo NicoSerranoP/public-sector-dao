@@ -167,8 +167,10 @@ predeploy                    Dry-run the install script (no broadcast)
 deploy *args                 Run tests, then broadcast + verify
 
 [test]
-test *args                   Run unit tests (fork tests excluded)
-test-fork *args               Run fork tests (requires RPC_URL)
+test *args                   Run tests (fork tests excluded)
+test-unit *args              Run unit tests (fork and invariant tests excluded)
+test-invariant *args         Run invariant tests (unit and fork tests excluded)
+test-fork *args              Run fork tests (requires RPC_URL. unit and invariant tests excluded)
 test-coverage                Generate an HTML coverage report under ./report
 
 [verification]

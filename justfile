@@ -4,6 +4,27 @@ import 'lib/just-foundry/justfile'
 # The deploy script run by `just deploy` / `just predeploy`.
 DEPLOY_SCRIPT := "script/InstallNFTVoting.s.sol:InstallNFTVotingScript"
 
+# Run only the top-level unit tests (excludes fork and invariant suites)
+[group('test')]
+test-unit *args:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    forge test --no-match-contract "InstallNFTVotingTest|NFTVotingInvariantsTest" {{ args }}
+
+# Run the invariant/fuzz suite at low verbosity (exclude unit and fork suites)
+[group('test')]
+test-invariant *args:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    forge test --match-path "./test/invariant/*.sol" {{ args }}
+
+# Run the fork tests (exclude unit and invariant suites)
+[group('test')]
+test-fork *args:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    forge test --match-path "./test/fork/*.sol" {{ args }}
+
 # Fetch submodules, scaffold .env and select the network (default: mainnet)
 [group('setup')]
 init network="mainnet":

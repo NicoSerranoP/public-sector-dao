@@ -19,3 +19,8 @@ via_ir = false
 
 # Suppress compiler warnings originating from dependency code (keeps warnings from src/test/script)
 ignored_warnings_from = ["lib"]
+
+[invariant]
+runs = 256
+depth = 100
+fail_on_revert = false
