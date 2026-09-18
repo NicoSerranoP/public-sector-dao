@@ -384,7 +384,12 @@ abstract contract Proposal is Settings {
             if (startDate < currentTimestamp) {
                 revert DateOutOfBounds({limit: currentTimestamp, actual: startDate});
             }
+
+            if (startDate > currentTimestamp + 365 days) {
+                revert DateOutOfBounds({limit: currentTimestamp + 365 days, actual: startDate});
+            }
         }
+
         // Since `minDuration` is limited to 1 year,
         // `startDate + minDuration` can only overflow if the `startDate` is after `type(uint64).max - minDuration`.
         // In this case, the proposal creation will revert and another date can be picked.
