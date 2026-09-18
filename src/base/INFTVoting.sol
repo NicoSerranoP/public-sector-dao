@@ -142,6 +142,11 @@ interface INFTVoting {
     /// @param votingToken The new ERC-721 voting token.
     event VotingTokenUpdated(address votingToken);
 
+    /// @notice Emitted when a proposal is executed, exposing which allowed-to-fail actions failed.
+    /// @param proposalId The ID of the proposal.
+    /// @param resultFailureMap Bitmap of failed actions returned by the executor.
+    event ProposalExecutionResult(uint256 indexed proposalId, uint256 resultFailureMap);
+
     /// @notice Thrown if a date is out of bounds.
     /// @param limit The limit value.
     /// @param actual The actual value.

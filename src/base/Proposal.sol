@@ -61,7 +61,7 @@ abstract contract Proposal is Settings {
 
         proposal_.executed = true;
 
-        _execute(
+        (, uint256 resultFailureMap) = _execute(
             proposal_.targetConfig.target,
             bytes32(_proposalId),
             proposal_.actions,
@@ -69,6 +69,7 @@ abstract contract Proposal is Settings {
             proposal_.targetConfig.operation
         );
 
+        emit ProposalExecutionResult(_proposalId, resultFailureMap);
         emit ProposalExecuted(_proposalId);
     }
 

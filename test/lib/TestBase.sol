@@ -45,6 +45,14 @@ contract TestBase is Test {
         actions = new Action[](0);
     }
 
+    function successfulActionOne() external pure returns (uint256) {
+        return 1;
+    }
+
+    function successfulActionTwo() external pure returns (uint256) {
+        return 2;
+    }
+
     function _one(address _a) internal pure returns (address[] memory arr) {
         arr = new address[](1);
         arr[0] = _a;

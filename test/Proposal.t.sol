@@ -8,7 +8,9 @@ import {DAO} from "@aragon/osx/core/dao/DAO.sol";
 import {NFTVoting} from "../src/NFTVoting.sol";
 import {GovernanceERC721} from "../src/erc721/GovernanceERC721.sol";
 import {MockGovernanceERC721} from "./mocks/MockGovernanceERC721.sol";
+import {MockFailingAction} from "./mocks/MockFailingAction.sol";
 import {INFTVoting} from "../src/base/INFTVoting.sol";
+import {Action} from "@aragon/osx-commons-contracts/src/executors/IExecutor.sol";
 import {IVotesUpgradeable} from "@openzeppelin/contracts-upgradeable/governance/utils/IVotesUpgradeable.sol";
 import {IDAO} from "@aragon/osx-commons-contracts/src/dao/IDAO.sol";
 
@@ -115,6 +117,32 @@ contract ProposalTest is TestBase {
 
         vm.prank(RANDOM_ADDRESS);
         vm.expectRevert(abi.encodeWithSelector(INFTVoting.ProposalExecutionForbidden.selector, proposalId));
+        plugin.execute(proposalId);
+    }
+
+    function test_WhenAnAllowedActionFails_ItEmitsFailureBitmap() external {
+        _build(_one(ALICE));
+
+        MockFailingAction failingAction = new MockFailingAction();
+        Action[] memory actions = new Action[](3);
+        actions[0] = Action({to: address(this), value: 0, data: abi.encodeCall(this.successfulActionOne, ())});
+        actions[1] =
+            Action({to: address(failingAction), value: 0, data: abi.encodeCall(MockFailingAction.alwaysRevert, ())});
+        actions[2] = Action({to: address(this), value: 0, data: abi.encodeCall(this.successfulActionTwo, ())});
+
+        vm.prank(ALICE);
+        uint256 proposalId = plugin.createProposal("", actions, 2, 0, 0);
+
+        vm.prank(ALICE);
+        plugin.vote(proposalId, INFTVoting.VoteOption.Yes, false);
+
+        vm.warp(block.timestamp + ONE_HOUR + 1);
+
+        // Bitmap uses 0-based action indexes; only action[1] fails, so expected map is 0b010 == 2.
+        vm.expectEmit(true, false, false, true, address(plugin));
+        emit INFTVoting.ProposalExecutionResult(proposalId, 2);
+
+        vm.prank(ALICE);
         plugin.execute(proposalId);
     }
 
