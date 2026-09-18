@@ -139,6 +139,11 @@ contract NFTDAOBuilder is TestBase {
             token_ = token;
         }
 
+        // A real block boundary must separate the token's mint(s) from the plugin's `initialize()`
+        // `updateVotingSettings` will validate data on an existing token supply
+        vm.roll(block.number + 1);
+        vm.warp(block.timestamp + 1);
+
         // Target the DAO by default
         if (targetAddress == address(0)) {
             targetAddress = address(dao);

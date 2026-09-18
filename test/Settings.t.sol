@@ -72,6 +72,34 @@ contract SettingsTest is TestBase {
         assertFalse(plugin.tokenIndexedByTimestamp(), "ERC721Votes default clock is block number");
     }
 
+    function test_WhenMinProposerVotingPowerExceedsTotalSupplyAtGenesis_InitializeReverts() external {
+        // Only 1 NFT is minted, so requesting 2 as the proposer threshold must be rejected
+        NFTDAOBuilder builder = new NFTDAOBuilder();
+        builder.withNewToken(_one(ALICE)).withMinProposerVotingPower(2);
+
+        vm.expectRevert(abi.encodeWithSelector(RatioOutOfBounds.selector, 1, 2));
+        builder.build();
+    }
+
+    function test_WhenMinProposerVotingPowerIsLessThanTotalSupplyAtGenesis_InitializeSucceeds() external {
+        // Only 1 NFT is minted, so requesting 0 as the proposer threshold must be accepted
+        NFTDAOBuilder builder = new NFTDAOBuilder();
+        builder.withNewToken(_one(ALICE)).withMinProposerVotingPower(0);
+
+        (dao, plugin,) = builder.build();
+
+        assertEq(plugin.minProposerVotingPower(), 0);
+    }
+
+    function test_WhenMinProposerVotingPowerEqualsTotalSupplyAtGenesis_InitializeSucceeds() external {
+        NFTDAOBuilder builder = new NFTDAOBuilder();
+        builder.withNewToken(_one(ALICE)).withMinProposerVotingPower(1);
+
+        (dao, plugin,) = builder.build();
+
+        assertEq(plugin.minProposerVotingPower(), 1);
+    }
+
     // -----------------------------------------------------------------------
     // ERC-165
     // -----------------------------------------------------------------------

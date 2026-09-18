@@ -187,4 +187,7 @@ interface INFTVoting {
     ///     `minProposerVotingPower`.
     /// @param account The address that attempted to create the proposal.
     error ProposalCreationForbidden(address account);
+
+    /// @notice Thrown if no voting token is set.
+    error NoVotingToken();
 }

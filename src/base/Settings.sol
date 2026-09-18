@@ -143,8 +143,12 @@ abstract contract Settings is INFTVoting, MetadataExtensionUpgradeable, PluginCl
             revert RatioOutOfBounds({limit: MAX_GOVERNANCE_RATIO, actual: _votingSettings.minApprovals});
         }
 
-        // For updates after initialization, check if votingSettings.maxBoundDate has not being set.
-        if (votingSettings.maxBoundDate != 0) {
+        // MinProposerVotingPower cannot be larger than total voting power.
+        if (_votingSettings.minProposerVotingPower > 0) {
+            if (address(votingToken) == address(0)) {
+                revert NoVotingToken();
+            }
+
             uint256 snapshotTimepoint;
 
             unchecked {

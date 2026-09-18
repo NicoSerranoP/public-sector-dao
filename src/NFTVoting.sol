@@ -46,8 +46,8 @@ contract NFTVoting is Votes {
         bytes calldata _pluginMetadata
     ) external initializer {
         __PluginCloneable_init(_dao);
-        _updateVotingSettings(_votingSettings);
         _updateVotingToken(_token);
+        _updateVotingSettings(_votingSettings);
         _setTargetConfig(_targetConfig);
         _setMetadata(_pluginMetadata);
 

@@ -25,6 +25,12 @@ test-fork *args:
     set -euo pipefail
     forge test --match-path "./test/fork/*.sol" {{ args }}
 
+# Deploy: run tests then broadcast with --slow (one block per tx; deploy nft in one block and plugin in another)
+[group('script')]
+deploy *args:
+    just test
+    just run {{ DEPLOY_SCRIPT }} --slow {{ args }}
+
 # Fetch submodules, scaffold .env and select the network (default: mainnet)
 [group('setup')]
 init network="mainnet":
