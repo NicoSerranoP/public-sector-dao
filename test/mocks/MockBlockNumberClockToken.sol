@@ -16,6 +16,7 @@ contract MockBlockNumberClockToken is MockGovernanceERC721 {
         return uint48(block.number);
     }
 
+    // forge-lint: disable-next-line(mixed-case-function)
     function CLOCK_MODE() public view virtual override returns (string memory) {
         return "mode=blocknumber";
     }
