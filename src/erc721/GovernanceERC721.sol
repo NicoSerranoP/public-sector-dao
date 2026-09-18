@@ -72,10 +72,14 @@ contract GovernanceERC721 is Initializable, ERC165Upgradeable, ERC721VotesUpgrad
     event AdminTransfer(address indexed from, address indexed to, uint256 indexed tokenId);
 
     /// @notice Calls the initialize function.
+    /// @dev This contract is meant to be deployed with `new` only, never used as a minimal-proxy /
+    ///     ERC-1967 implementation. `_disableInitializers()` locks this specific deployment's storage
+    ///     against any further `initialize` call once the constructor's own call has run.
     /// @param _dao The managing DAO.
     /// @param _settings Token settings for initialization
     constructor(IDAO _dao, TokenSettings memory _settings) {
         initialize(_dao, _settings);
+        _disableInitializers();
     }
 
     /// @notice Initializes the contract and mints one token per entry in `_settings.receivers`.
