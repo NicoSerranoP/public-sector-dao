@@ -20,9 +20,6 @@ import {Settings} from "./Settings.sol";
 abstract contract Proposal is Settings {
     using SafeCastUpgradeable for uint256;
 
-    /// @notice The ID of the permission required to call the `createProposal` functions.
-    bytes32 public constant CREATE_PROPOSAL_PERMISSION_ID = keccak256("CREATE_PROPOSAL_PERMISSION");
-
     /// @notice The ID of the permission required to call the `execute` function.
     bytes32 public constant EXECUTE_PROPOSAL_PERMISSION_ID = keccak256("EXECUTE_PROPOSAL_PERMISSION");
 
@@ -188,7 +185,7 @@ abstract contract Proposal is Settings {
     }
 
     /// @notice Returns whether `_account` currently meets the voting-power threshold required to
-    ///     create a proposal.
+    ///     create a proposal: needs more or equal voting power than the minimal proposer voting power
     /// @param _account The address to check.
     /// @return Whether `_account` can call `createProposal`.
     function canCreateProposal(address _account) public view virtual returns (bool) {
@@ -256,7 +253,7 @@ abstract contract Proposal is Settings {
     }
 
     /// @notice Creates a new majority voting proposal.
-    /// @dev Requires the `CREATE_PROPOSAL_PERMISSION_ID` permission.
+    /// @dev Check canCreateProposal() to determine if sender can do it
     /// @param _metadata The metadata of the proposal.
     /// @param _actions The actions that will be executed after the proposal passes.
     /// @param _allowFailureMap Allows proposal to succeed even if an action reverts.
@@ -274,7 +271,7 @@ abstract contract Proposal is Settings {
         uint256 _allowFailureMap,
         uint64 _startDate,
         uint64 _endDate
-    ) public virtual auth(CREATE_PROPOSAL_PERMISSION_ID) returns (uint256 proposalId) {
+    ) public virtual returns (uint256 proposalId) {
         if (!canCreateProposal(_msgSender())) {
             revert ProposalCreationForbidden(_msgSender());
         }

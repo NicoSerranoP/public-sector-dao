@@ -192,21 +192,20 @@ contract InstallNFTVotingScript is Script {
         view
         returns (Action[] memory actions)
     {
-        uint256 baseLength = _mintedNewToken ? 9 : 5;
+        uint256 baseLength = _mintedNewToken ? 8 : 4;
         actions = new Action[](baseLength + 1);
 
         actions[0] = _grantAction(_dao, address(_plugin), address(_dao), _plugin.UPDATE_VOTING_SETTINGS_PERMISSION_ID());
         actions[1] = _grantAction(_dao, address(_dao), address(_plugin), _dao.EXECUTE_PERMISSION_ID());
-        actions[2] = _grantAction(_dao, address(_plugin), ANY_ADDR, _plugin.CREATE_PROPOSAL_PERMISSION_ID());
-        actions[3] = _grantAction(_dao, address(_plugin), address(_dao), _plugin.SET_TARGET_CONFIG_PERMISSION_ID());
-        actions[4] = _grantAction(_dao, address(_plugin), address(_dao), _plugin.SET_METADATA_PERMISSION_ID());
+        actions[2] = _grantAction(_dao, address(_plugin), address(_dao), _plugin.SET_TARGET_CONFIG_PERMISSION_ID());
+        actions[3] = _grantAction(_dao, address(_plugin), address(_dao), _plugin.SET_METADATA_PERMISSION_ID());
 
         if (_mintedNewToken) {
             GovernanceERC721 nft = GovernanceERC721(address(_token));
-            actions[5] = _grantAction(_dao, address(_token), address(_dao), nft.MINT_PERMISSION_ID());
-            actions[6] = _grantAction(_dao, address(_token), address(_dao), nft.BURN_PERMISSION_ID());
-            actions[7] = _grantAction(_dao, address(_token), address(_dao), nft.TRANSFER_PERMISSION_ID());
-            actions[8] = _grantAction(_dao, address(_token), address(_dao), nft.UPDATE_BASE_URI_ID());
+            actions[4] = _grantAction(_dao, address(_token), address(_dao), nft.MINT_PERMISSION_ID());
+            actions[5] = _grantAction(_dao, address(_token), address(_dao), nft.BURN_PERMISSION_ID());
+            actions[6] = _grantAction(_dao, address(_token), address(_dao), nft.TRANSFER_PERMISSION_ID());
+            actions[7] = _grantAction(_dao, address(_token), address(_dao), nft.UPDATE_BASE_URI_ID());
         }
 
         // Must be last: drop bootstrap authority used to run this installation batch.

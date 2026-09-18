@@ -131,10 +131,7 @@ contract NFTDAOBuilder is TestBase {
             }
 
             GovernanceERC721.TokenSettings memory settings = GovernanceERC721.TokenSettings({
-                name: "MyNFT",
-                symbol: "SYM",
-                baseURI: "https://example.com/",
-                receivers: newTokenReceivers
+                name: "MyNFT", symbol: "SYM", baseURI: "https://example.com/", receivers: newTokenReceivers
             });
 
             token_ = new GovernanceERC721(dao, settings);
@@ -162,16 +159,11 @@ contract NFTDAOBuilder is TestBase {
         plugin = NFTVoting(
             ProxyLib.deployUUPSProxy(
                 address(NFT_VOTING_PLUGIN_BASE),
-                abi.encodeCall(
-                    NFTVoting.initialize, (dao, votingSettings, token_, targetConfig, pluginMetadata)
-                )
+                abi.encodeCall(NFTVoting.initialize, (dao, votingSettings, token_, targetConfig, pluginMetadata))
             )
         );
 
         vm.startPrank(daoOwner);
-
-        // Allow anyone to create proposals; `NFTVoting.createProposal` gates on voting power itself.
-        dao.grant(address(plugin), ANY_ADDR, plugin.CREATE_PROPOSAL_PERMISSION_ID());
 
         // Allow the plugin to execute on the DAO
         dao.grant(address(dao), address(plugin), dao.EXECUTE_PERMISSION_ID());
