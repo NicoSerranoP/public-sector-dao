@@ -262,6 +262,8 @@ abstract contract Proposal is Settings {
             revert ProposalCreationForbidden(_msgSender());
         }
 
+        require(_actions.length <= 256, "Too many actions (256+) in the proposal");
+
         uint256 snapshotTimepoint;
         unchecked {
             // The time point must be already mined (block) or in the past (timestamp) to

@@ -62,8 +62,7 @@ abstract contract Settings is INFTVoting, MetadataExtensionUpgradeable, PluginCl
 
     /// @notice Returns the total voting power checkpointed for a specific timestamp or block number.
     /// @dev For an [ERC-721](https://eips.ethereum.org/EIPS/eip-721) `Votes` token this equals the number of
-    ///     tokens that have been delegated (and are therefore authorized to vote) at `_timePoint`, since each
-    ///     token counts as exactly one unit of voting power.
+    ///     tokens that have been minted at `_timePoint`, since each token counts as one unit of voting power (delegated or not)
     /// @param _timePoint The block number or timestamp.
     /// @return The total voting power.
     function totalVotingPower(uint256 _timePoint) public view returns (uint256) {
