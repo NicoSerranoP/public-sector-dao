@@ -170,12 +170,20 @@ abstract contract Proposal is Settings {
     }
 
     function isMinParticipationReached(uint256 _proposalId) public view virtual returns (bool) {
+        if (!_proposalExists(_proposalId)) {
+            return false;
+        }
+
         Proposal storage proposal_ = proposals[_proposalId];
 
         return proposal_.tally.yes + proposal_.tally.no + proposal_.tally.abstain >= proposal_.parameters.minVotingPower;
     }
 
     function isMinApprovalReached(uint256 _proposalId) public view virtual returns (bool) {
+        if (!_proposalExists(_proposalId)) {
+            return false;
+        }
+
         return proposals[_proposalId].tally.yes >= proposals[_proposalId].minApprovalPower;
     }
 

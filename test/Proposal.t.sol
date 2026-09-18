@@ -168,6 +168,18 @@ contract ProposalTest is TestBase {
         assertFalse(plugin.canExecute(proposalId), "min approval not reached");
     }
 
+    function test_WhenProposalDoesNotExist_MinParticipationAndMinApprovalReturnFalse() external {
+        _build(_one(ALICE));
+
+        uint256 unknownProposalId = 12345;
+
+        assertFalse(
+            plugin.isMinParticipationReached(unknownProposalId),
+            "non-existent proposal should not satisfy participation"
+        );
+        assertFalse(plugin.isMinApprovalReached(unknownProposalId), "non-existent proposal should not satisfy approval");
+    }
+
     // -----------------------------------------------------------------------
     // proposal creation gating
     // -----------------------------------------------------------------------
