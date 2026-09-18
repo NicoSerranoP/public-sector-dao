@@ -204,6 +204,8 @@ just test-coverage # HTML coverage report under ./report
 - **New DAO** (default, `EXISTING_DAO_ADDRESS` unset): creates a DAO via Aragon's `DAOFactory` and installs the plugin on it in the same run.
 - **Existing DAO** (`EXISTING_DAO_ADDRESS` set): installs onto an already-deployed DAO. This requires the deployer key to already hold `EXECUTE_PERMISSION_ID` on that DAO — installing into an existing, fully decentralized DAO otherwise requires a governance proposal instead of a direct broadcast transaction.
 
+For both flows, the script revokes the installer's direct `EXECUTE_PERMISSION_ID` on the DAO as the last action of the install batch, so DAO execution is handed over to governance/plugin permissions atomically.
+
 All install parameters (token, voting settings, target config, …) are read from environment variables — see the "INSTALL SETTINGS" section in [`.env.example`](./.env.example) for the full list and their defaults.
 
 ```sh
@@ -257,6 +259,8 @@ When running a production deployment ceremony, you can use these steps as a refe
 - [ ] All the project's smart contracts are correctly verified on the reference block explorer of the target network.
 - [ ] The output of the latest `logs/InstallNFTVoting-<network>-<timestamp>.log` file corresponds to the console output
 - [ ] A file called `artifacts/install-nft-<network>-<timestamp>.json` has been created, and the addresses match those logged to the screen
+- [ ] I verified that the deployment wallet no longer has direct DAO execute rights:
+  - `cast call <DAO_ADDRESS> "isGranted(address,address,bytes32,bytes)(bool)" <DAO_ADDRESS> <DEPLOYER_ADDRESS> $(cast keccak "EXECUTE_PERMISSION") "0x"` returns `false`
 - [ ] I have uploaded the following files to a shared location:
   - `logs/InstallNFTVoting-<network>-<timestamp>.log` (the last one)
   - `artifacts/install-nft-<network>-<timestamp>.json`  (the last one)

@@ -128,6 +128,12 @@ contract InstallNFTVotingScript is Script {
 
         Action[] memory actions = _buildPermissionActions(_dao, plugin_, token_, mintedNewToken);
         _dao.execute(bytes32(0), actions, 0);
+
+        address installer = _resolveInstaller();
+        require(
+            !_dao.isGranted(address(_dao), installer, _dao.EXECUTE_PERMISSION_ID(), ""),
+            "installer still has EXECUTE permission on DAO"
+        );
     }
 
     function _resolveToken(DAO _dao, InstallParams memory _params, bool _mintedNewToken)
@@ -147,10 +153,7 @@ contract InstallNFTVotingScript is Script {
         }
 
         GovernanceERC721.TokenSettings memory settings = GovernanceERC721.TokenSettings({
-            name: _params.tokenName,
-            symbol: _params.tokenSymbol,
-            baseURI: _params.baseTokenURI,
-            receivers: receivers
+            name: _params.tokenName, symbol: _params.tokenSymbol, baseURI: _params.baseTokenURI, receivers: receivers
         });
         token_ = new GovernanceERC721(IDAO(address(_dao)), settings);
 
@@ -172,13 +175,7 @@ contract InstallNFTVotingScript is Script {
             nftVotingBase.deployMinimalProxy(
                 abi.encodeCall(
                     NFTVoting.initialize,
-                    (
-                        IDAO(address(_dao)),
-                        _params.votingSettings,
-                        _token,
-                        targetConfig,
-                        _params.pluginMetadata
-                    )
+                    (IDAO(address(_dao)), _params.votingSettings, _token, targetConfig, _params.pluginMetadata)
                 )
             )
         );
@@ -190,7 +187,8 @@ contract InstallNFTVotingScript is Script {
         view
         returns (Action[] memory actions)
     {
-        actions = new Action[](_mintedNewToken ? 10 : 6);
+        uint256 baseLength = _mintedNewToken ? 10 : 6;
+        actions = new Action[](baseLength + 1);
 
         actions[0] = _grantAction(_dao, address(_plugin), address(_dao), _plugin.UPDATE_VOTING_SETTINGS_PERMISSION_ID());
         actions[1] = _grantAction(_dao, address(_dao), address(_plugin), _dao.EXECUTE_PERMISSION_ID());
@@ -206,6 +204,9 @@ contract InstallNFTVotingScript is Script {
             actions[8] = _grantAction(_dao, address(_token), address(_dao), nft.TRANSFER_PERMISSION_ID());
             actions[9] = _grantAction(_dao, address(_token), address(_dao), nft.UPDATE_BASE_URI_ID());
         }
+
+        // Must be last: drop bootstrap authority used to run this installation batch.
+        actions[baseLength] = _revokeAction(_dao, address(_dao), _resolveInstaller(), _dao.EXECUTE_PERMISSION_ID());
     }
 
     function _grantAction(DAO _dao, address _where, address _who, bytes32 _permissionId)
@@ -216,6 +217,22 @@ contract InstallNFTVotingScript is Script {
         return Action({
             to: address(_dao), value: 0, data: abi.encodeCall(PermissionManager.grant, (_where, _who, _permissionId))
         });
+    }
+
+    function _revokeAction(DAO _dao, address _where, address _who, bytes32 _permissionId)
+        internal
+        pure
+        returns (Action memory)
+    {
+        return Action({
+            to: address(_dao), value: 0, data: abi.encodeCall(PermissionManager.revoke, (_where, _who, _permissionId))
+        });
+    }
+
+    function _resolveInstaller() internal view returns (address) {
+        // In forge broadcast mode, `deployer` is the EOA from DEPLOYER_KEY.
+        // In Solidity tests, DAOFactory grants bootstrap EXECUTE to this script contract.
+        return deployer == address(0) ? address(this) : deployer;
     }
 
     function readInstallParams() public view returns (InstallParams memory params) {

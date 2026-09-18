@@ -36,6 +36,10 @@ contract InstallNFTVotingTest is ForkTestBase {
         );
         assertNotEq(address(token), address(0), "A new token should have been minted");
         assertTrue(plugin.isMember(address(this)), "Deployer should hold the newly minted NFT");
+        assertFalse(
+            dao.isGranted(address(dao), address(script), dao.EXECUTE_PERMISSION_ID(), ""),
+            "Installer should not retain EXECUTE permission"
+        );
 
         // The DAO should be able to mint, burn and force-transfer vote NFTs.
         GovernanceERC721 nft = GovernanceERC721(address(token));
@@ -66,6 +70,10 @@ contract InstallNFTVotingTest is ForkTestBase {
         assertTrue(
             dao.isGranted(address(dao), address(plugin), dao.EXECUTE_PERMISSION_ID(), ""), "Plugin should be installed"
         );
+        assertFalse(
+            dao.isGranted(address(dao), address(script), dao.EXECUTE_PERMISSION_ID(), ""),
+            "Installer should not retain EXECUTE permission"
+        );
         assertEq(address(token), address(existingToken), "The plugin should use the provided token");
         assertTrue(plugin.isMember(ALICE), "Alice should be a member");
         assertTrue(plugin.isMember(BOB), "Bob should be a member");
@@ -80,6 +88,10 @@ contract InstallNFTVotingTest is ForkTestBase {
 
         assertTrue(
             dao.isGranted(address(dao), address(plugin), dao.EXECUTE_PERMISSION_ID(), ""), "Plugin should be installed"
+        );
+        assertFalse(
+            dao.isGranted(address(dao), address(script), dao.EXECUTE_PERMISSION_ID(), ""),
+            "Installer should not retain EXECUTE permission"
         );
         assertNotEq(address(token), address(0));
     }
