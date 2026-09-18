@@ -25,8 +25,7 @@ abstract contract Votes is Proposal, IMembership {
     /// @param _proposalId The ID of the proposal.
     /// @param _voteOption The chosen vote option to be casted on the proposal vote.
     /// @param _voter The address of the account that is voting on the `_proposalId`.
-    /// @param _tryEarlyExecution If `true`,  early execution is tried after the vote cast.
-    ///     The call does not revert if early execution is not possible.
+    /// @param _tryEarlyExecution If `true`,  early execution is tried after the vote cast. Reverts if fails
     function _vote(uint256 _proposalId, VoteOption _voteOption, address _voter, bool _tryEarlyExecution)
         internal
         virtual
