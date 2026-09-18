@@ -316,7 +316,7 @@ Please do not use the public issue tracker to report security issues.
 
 1. [ETHSkills](https://github.com/austintgriffith/ethskills): AI Agent skills built by Austin Griffin (author of ScaffoldETH). Results saved in [/audits/ethskills](./audits/ethskills/). Findings in report have been addressed
 
-1. **PENDING:** [Trail of Bits skills](https://github.com/trailofbits/skills): AI Agent skills to run a Solidity audit. Results will be saved in [/audits/trailofbits](./audits/trailofbits/).
+1. **PENDING:** [Trail of Bits skills](https://github.com/trailofbits/skills): AI Agent skills to run a Solidity audit. Ran `/audit-context-building` skill and asked the agent to do vulnerability huting using the produced dossier file. Results will be saved in [/audits/trailofbits](./audits/trailofbits/).
 
 1. **PENDING:** [Slither](https://github.com/crytic/slither): static analysis tool to detect known vulnerabilities in Ethereum.
 
