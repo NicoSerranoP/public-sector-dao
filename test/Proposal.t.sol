@@ -154,7 +154,7 @@ contract ProposalTest is TestBase {
         receivers[3] = DAVID;
 
         IVotesUpgradeable token_;
-        (dao, plugin, token_) = new NFTDAOBuilder().withMinApprovals(uint64(RATIO_BASE)).withNewToken(receivers).build(); // 100% approval
+        (dao, plugin, token_) = new NFTDAOBuilder().withMinApprovals(900_000).withNewToken(receivers).build(); // 90% approval
         nft = GovernanceERC721(address(token_));
 
         vm.prank(ALICE);
@@ -164,7 +164,7 @@ contract ProposalTest is TestBase {
 
         vm.warp(block.timestamp + ONE_HOUR + 1);
 
-        // 1 of 4 yes < 100% minApproval
+        // 1 of 4 yes < 90% minApproval
         assertFalse(plugin.canExecute(proposalId), "min approval not reached");
     }
 

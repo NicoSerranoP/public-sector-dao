@@ -42,14 +42,14 @@ interface INFTVoting {
     ///     In vote replacement mode (2), voters can change their vote multiple times
     ///     and only the latest vote option is tallied.
     /// @param supportThreshold The support threshold value.
-    ///     Its value has to be in the interval [0, 10^6) defined by `RATIO_BASE = 10**6`.
+    ///     Its value has to be in the interval [0, 10^6) defined by `RATIO_BASE = 10**6 = 1,000,000 = 100%`.
     /// @param minParticipation The minimum participation value.
-    ///     Its value has to be in the interval [0, 10^6] defined by `RATIO_BASE = 10**6`.
+    ///     Its value has to be in the interval [1, 900_000] where 1,000,000 = 100%.
     /// @param minDuration The minimum duration of the proposal vote in seconds.
     /// @param maxBoundDate The maximum allowed offset in seconds for proposal start/end dates.
     /// @param minProposerVotingPower The minimum voting power required to create a proposal.
     /// @param minApprovals The minimum ratio of yes votes needed for a proposal to succeed.
-    ///     Its value has to be in the interval [0, 10^6] defined by `RATIO_BASE = 10**6`.
+    ///     Its value has to be in the interval [1, 900_000] where 1,000,000 = 100%.
     struct VotingSettings {
         VotingMode votingMode;
         uint32 supportThreshold;
@@ -87,7 +87,7 @@ interface INFTVoting {
     /// @notice A container for the proposal parameters at the time of proposal creation.
     /// @param votingMode A parameter to select the vote mode.
     /// @param supportThreshold The support threshold value.
-    ///     The value has to be in the interval [0, 10^6) defined by `RATIO_BASE = 10**6`.
+    ///     The value has to be in the interval [0, 10^6) defined by `RATIO_BASE = 10**6 = 1,000,000 = 100%`.
     /// @param startDate The start date of the proposal vote.
     /// @param endDate The end date of the proposal vote.
     /// @param snapshotTimepoint The number of the block prior to the proposal creation.

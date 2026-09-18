@@ -161,7 +161,25 @@ contract SettingsTest is TestBase {
         });
 
         dao.grant(address(plugin), address(this), plugin.UPDATE_VOTING_SETTINGS_PERMISSION_ID());
-        vm.expectRevert(abi.encodeWithSelector(RatioOutOfBounds.selector, RATIO_BASE, 0));
+        vm.expectRevert(abi.encodeWithSelector(RatioOutOfBounds.selector, 900_000, 0));
+        plugin.updateVotingSettings(settings);
+    }
+
+    function test_WhenMinParticipationIsAboveSafeBound_ItReverts() external {
+        _build(_one(ALICE));
+
+        INFTVoting.VotingSettings memory settings = INFTVoting.VotingSettings({
+            votingMode: INFTVoting.VotingMode.Standard,
+            supportThreshold: 500_000,
+            minParticipation: 900_001,
+            minDuration: ONE_HOUR,
+            maxBoundDate: 365 days,
+            minProposerVotingPower: 0,
+            minApprovals: 1
+        });
+
+        dao.grant(address(plugin), address(this), plugin.UPDATE_VOTING_SETTINGS_PERMISSION_ID());
+        vm.expectRevert(abi.encodeWithSelector(RatioOutOfBounds.selector, 900_000, 900_001));
         plugin.updateVotingSettings(settings);
     }
 
@@ -179,7 +197,43 @@ contract SettingsTest is TestBase {
         });
 
         dao.grant(address(plugin), address(this), plugin.UPDATE_VOTING_SETTINGS_PERMISSION_ID());
-        vm.expectRevert(abi.encodeWithSelector(RatioOutOfBounds.selector, RATIO_BASE, 0));
+        vm.expectRevert(abi.encodeWithSelector(RatioOutOfBounds.selector, 900_000, 0));
+        plugin.updateVotingSettings(settings);
+    }
+
+    function test_WhenMinApprovalIsAboveSafeBound_ItReverts() external {
+        _build(_one(ALICE));
+
+        INFTVoting.VotingSettings memory settings = INFTVoting.VotingSettings({
+            votingMode: INFTVoting.VotingMode.Standard,
+            supportThreshold: 500_000,
+            minParticipation: 100_000,
+            minDuration: ONE_HOUR,
+            maxBoundDate: 365 days,
+            minProposerVotingPower: 0,
+            minApprovals: 900_001
+        });
+
+        dao.grant(address(plugin), address(this), plugin.UPDATE_VOTING_SETTINGS_PERMISSION_ID());
+        vm.expectRevert(abi.encodeWithSelector(RatioOutOfBounds.selector, 900_000, 900_001));
+        plugin.updateVotingSettings(settings);
+    }
+
+    function test_WhenMinProposerVotingPowerExceedsCurrentSupply_ItReverts() external {
+        _build(_one(ALICE));
+
+        INFTVoting.VotingSettings memory settings = INFTVoting.VotingSettings({
+            votingMode: INFTVoting.VotingMode.Standard,
+            supportThreshold: 500_000,
+            minParticipation: 100_000,
+            minDuration: ONE_HOUR,
+            maxBoundDate: 365 days,
+            minProposerVotingPower: 2,
+            minApprovals: 1
+        });
+
+        dao.grant(address(plugin), address(this), plugin.UPDATE_VOTING_SETTINGS_PERMISSION_ID());
+        vm.expectRevert(abi.encodeWithSelector(RatioOutOfBounds.selector, 1, 2));
         plugin.updateVotingSettings(settings);
     }
 

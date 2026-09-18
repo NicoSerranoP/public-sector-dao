@@ -29,6 +29,9 @@ abstract contract Settings is INFTVoting, MetadataExtensionUpgradeable, PluginCl
     ///     `updateVotingToken` functions.
     bytes32 public constant UPDATE_VOTING_SETTINGS_PERMISSION_ID = keccak256("UPDATE_VOTING_SETTINGS_PERMISSION");
 
+    /// @notice Hard upper bound for `minParticipation` and `minApprovals` to avoid irreversible governance lockup.
+    uint32 internal constant MAX_GOVERNANCE_RATIO = 900_000; // 90%
+
     /// @notice The struct storing the voting settings.
     VotingSettings internal votingSettings;
 
@@ -120,10 +123,10 @@ abstract contract Settings is INFTVoting, MetadataExtensionUpgradeable, PluginCl
             revert RatioOutOfBounds({limit: RATIO_BASE - 1, actual: _votingSettings.supportThreshold});
         }
 
-        // Require the minimum participation value to be in the interval [1, 10^6],
+        // Require the minimum participation value to be in the interval [1, 900_000],
         // because `>=` comparison is used in the participation criterion.
-        if (_votingSettings.minParticipation == 0 || _votingSettings.minParticipation > RATIO_BASE) {
-            revert RatioOutOfBounds({limit: RATIO_BASE, actual: _votingSettings.minParticipation});
+        if (_votingSettings.minParticipation == 0 || _votingSettings.minParticipation > MAX_GOVERNANCE_RATIO) {
+            revert RatioOutOfBounds({limit: MAX_GOVERNANCE_RATIO, actual: _votingSettings.minParticipation});
         }
 
         if (_votingSettings.minDuration < 60 minutes) {
@@ -134,10 +137,26 @@ abstract contract Settings is INFTVoting, MetadataExtensionUpgradeable, PluginCl
             revert MinDurationOutOfBounds({limit: _votingSettings.maxBoundDate, actual: _votingSettings.minDuration});
         }
 
-        // Require the minimum approval value to be in the interval [1, 10^6],
+        // Require the minimum approval value to be in the interval [1, 900_000],
         // because `>=` comparison is used in the participation criterion.
-        if (_votingSettings.minApprovals == 0 || _votingSettings.minApprovals > RATIO_BASE) {
-            revert RatioOutOfBounds({limit: RATIO_BASE, actual: _votingSettings.minApprovals});
+        if (_votingSettings.minApprovals == 0 || _votingSettings.minApprovals > MAX_GOVERNANCE_RATIO) {
+            revert RatioOutOfBounds({limit: MAX_GOVERNANCE_RATIO, actual: _votingSettings.minApprovals});
+        }
+
+        // For updates after initialization, check if votingSettings.maxBoundDate has not being set.
+        if (votingSettings.maxBoundDate != 0) {
+            uint256 snapshotTimepoint;
+
+            unchecked {
+                snapshotTimepoint = tokenIndexedByTimestamp ? block.timestamp - 1 : block.number - 1;
+            }
+
+            uint256 currentTotalVotingPower = totalVotingPower(snapshotTimepoint);
+            if (_votingSettings.minProposerVotingPower > currentTotalVotingPower) {
+                revert RatioOutOfBounds({
+                    limit: currentTotalVotingPower, actual: _votingSettings.minProposerVotingPower
+                });
+            }
         }
 
         votingSettings = _votingSettings;
