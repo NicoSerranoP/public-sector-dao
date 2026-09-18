@@ -5,6 +5,7 @@ import {DAO} from "@aragon/osx/core/dao/DAO.sol";
 import {IDAO} from "@aragon/osx-commons-contracts/src/dao/IDAO.sol";
 import {DaoUnauthorized} from "@aragon/osx-commons-contracts/src/permission/auth/auth.sol";
 import {IVotesUpgradeable} from "@openzeppelin/contracts-upgradeable/governance/utils/IVotesUpgradeable.sol";
+import {IERC5267Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC5267Upgradeable.sol";
 
 import {NFTVoting} from "../src/NFTVoting.sol";
 import {GovernanceERC721} from "../src/erc721/GovernanceERC721.sol";
@@ -108,5 +109,11 @@ contract GovernanceERC721Test is TestBase {
         vm.prank(BOB);
         vm.expectRevert(expectedErr);
         nft.setBaseURI("https://new-base-uri.com/");
+    }
+
+    function test_WhenQueryingSupportsInterface_ItIncludesEIP5267() external {
+        _build(_one(ALICE));
+
+        assertTrue(nft.supportsInterface(type(IERC5267Upgradeable).interfaceId));
     }
 }

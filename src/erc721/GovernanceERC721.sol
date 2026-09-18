@@ -15,6 +15,7 @@ import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Ini
 import {ERC165Upgradeable} from "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol";
 import {IVotesUpgradeable} from "@openzeppelin/contracts-upgradeable/governance/utils/IVotesUpgradeable.sol";
 import {IERC6372Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC6372Upgradeable.sol";
+import {IERC5267Upgradeable} from "@openzeppelin/contracts-upgradeable/interfaces/IERC5267Upgradeable.sol";
 
 import {
     DaoAuthorizableUpgradeable
@@ -115,6 +116,7 @@ contract GovernanceERC721 is Initializable, ERC165Upgradeable, ERC721VotesUpgrad
         return _interfaceId == type(IERC721Upgradeable).interfaceId
             || _interfaceId == type(IERC721MetadataUpgradeable).interfaceId
             || _interfaceId == type(IVotesUpgradeable).interfaceId
+            || _interfaceId == type(IERC5267Upgradeable).interfaceId
             || _interfaceId == type(IERC6372Upgradeable).interfaceId || super.supportsInterface(_interfaceId);
     }
 
