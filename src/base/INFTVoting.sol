@@ -89,6 +89,7 @@ interface INFTVoting {
     /// @param startDate The start date of the proposal vote.
     /// @param endDate The end date of the proposal vote.
     /// @param snapshotTimepoint The number of the block prior to the proposal creation.
+    /// @param votingToken The voting token used to evaluate the proposal.
     /// @param minVotingPower The minimum voting power needed for a proposal to reach minimum participation.
     struct ProposalParameters {
         VotingMode votingMode;
@@ -96,6 +97,7 @@ interface INFTVoting {
         uint64 startDate;
         uint64 endDate;
         uint64 snapshotTimepoint;
+        address votingToken;
         uint256 minVotingPower;
     }
 

@@ -4,6 +4,7 @@ pragma solidity ^0.8.8;
 
 import {IMembership} from "@aragon/osx-commons-contracts/src/plugin/extensions/membership/IMembership.sol";
 import {IERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
+import {IVotesUpgradeable} from "@openzeppelin/contracts-upgradeable/governance/utils/IVotesUpgradeable.sol";
 
 import {Proposal} from "./Proposal.sol";
 
@@ -31,9 +32,10 @@ abstract contract Votes is Proposal, IMembership {
         virtual
     {
         Proposal storage proposal_ = proposals[_proposalId];
+        IVotesUpgradeable proposalVotingToken = IVotesUpgradeable(proposal_.parameters.votingToken);
 
         // This could re-enter, though we can assume the governance token is not malicious
-        uint256 votingPower = votingToken.getPastVotes(_voter, proposal_.parameters.snapshotTimepoint);
+        uint256 votingPower = proposalVotingToken.getPastVotes(_voter, proposal_.parameters.snapshotTimepoint);
         VoteOption state = proposal_.voters[_voter];
 
         // If voter had previously voted, decrease count
@@ -96,6 +98,7 @@ abstract contract Votes is Proposal, IMembership {
         returns (bool)
     {
         Proposal storage proposal_ = proposals[_proposalId];
+        IVotesUpgradeable proposalVotingToken = IVotesUpgradeable(proposal_.parameters.votingToken);
 
         // The proposal vote hasn't started or has already ended.
         if (!_isProposalOpen(proposal_)) {
@@ -108,7 +111,7 @@ abstract contract Votes is Proposal, IMembership {
         }
 
         // The voter has no voting power.
-        if (votingToken.getPastVotes(_account, proposal_.parameters.snapshotTimepoint) == 0) {
+        if (proposalVotingToken.getPastVotes(_account, proposal_.parameters.snapshotTimepoint) == 0) {
             return false;
         }
 

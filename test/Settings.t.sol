@@ -252,6 +252,53 @@ contract SettingsTest is TestBase {
         assertTrue(plugin.canVote(proposalId, BOB, INFTVoting.VoteOption.Yes), "bob holds the new token");
     }
 
+    function test_WhenTheVotingTokenIsUpdatedWhileAProposalIsOpen_TheProposalKeepsUsingTheOriginalToken() external {
+        _build(_one(ALICE));
+
+        vm.roll(block.number + 1);
+        vm.warp(block.timestamp + 1);
+
+        vm.prank(ALICE);
+        uint256 proposalId = plugin.createProposal("", _dummyActions(), 0, 0, 0);
+
+        (bool open,, INFTVoting.ProposalParameters memory parameters,,,,) = plugin.getProposal(proposalId);
+        assertTrue(open, "proposal should be open");
+        assertEq(parameters.votingToken, address(nft), "proposal should snapshot the original token");
+
+        vm.roll(block.number + 1);
+        vm.warp(block.timestamp + 1);
+
+        GovernanceERC721.TokenSettings memory settings = GovernanceERC721.TokenSettings({
+            name: "New NFT", symbol: "NEW", baseURI: "https://example.com/", receivers: _one(BOB)
+        });
+        GovernanceERC721 newToken = new GovernanceERC721(IDAO(address(dao)), settings);
+
+        dao.grant(address(plugin), address(this), plugin.UPDATE_VOTING_SETTINGS_PERMISSION_ID());
+        plugin.updateVotingToken(IVotesUpgradeable(address(newToken)));
+
+        vm.roll(block.number + 1);
+        vm.warp(block.timestamp + 1);
+
+        assertEq(address(plugin.getVotingToken()), address(newToken), "global token should be updated");
+        assertTrue(
+            plugin.canVote(proposalId, ALICE, INFTVoting.VoteOption.Yes),
+            "alice should keep her voting rights in the old proposal"
+        );
+        assertFalse(
+            plugin.canVote(proposalId, BOB, INFTVoting.VoteOption.Yes),
+            "bob should not have voting rights in the old proposal"
+        );
+
+        vm.prank(ALICE);
+        plugin.vote(proposalId, INFTVoting.VoteOption.Yes, false);
+
+        vm.warp(block.timestamp + ONE_HOUR + 1);
+
+        assertTrue(plugin.canExecute(proposalId), "proposal should remain executable after the token update");
+        dao.grant(address(plugin), address(this), plugin.EXECUTE_PROPOSAL_PERMISSION_ID());
+        plugin.execute(proposalId);
+    }
+
     // -----------------------------------------------------------------------
     // clock detection (adversarial)
     // -----------------------------------------------------------------------

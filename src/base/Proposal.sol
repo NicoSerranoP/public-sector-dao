@@ -9,6 +9,7 @@ import {IProposal} from "@aragon/osx-commons-contracts/src/plugin/extensions/pro
 import {RATIO_BASE, _applyRatioCeiled} from "@aragon/osx-commons-contracts/src/utils/math/Ratio.sol";
 
 import {SafeCastUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/math/SafeCastUpgradeable.sol";
+import {IVotesUpgradeable} from "@openzeppelin/contracts-upgradeable/governance/utils/IVotesUpgradeable.sol";
 
 import {Settings} from "./Settings.sol";
 
@@ -150,9 +151,10 @@ abstract contract Proposal is Settings {
 
     function isSupportThresholdReachedEarly(uint256 _proposalId) public view virtual returns (bool) {
         Proposal storage proposal_ = proposals[_proposalId];
+        IVotesUpgradeable proposalVotingToken = IVotesUpgradeable(proposal_.parameters.votingToken);
 
-        uint256 noVotesWorstCase =
-            totalVotingPower(proposal_.parameters.snapshotTimepoint) - proposal_.tally.yes - proposal_.tally.abstain;
+        uint256 noVotesWorstCase = proposalVotingToken.getPastTotalSupply(proposal_.parameters.snapshotTimepoint)
+            - proposal_.tally.yes - proposal_.tally.abstain;
 
         return (RATIO_BASE - proposal_.parameters.supportThreshold) * proposal_.tally.yes
             > proposal_.parameters.supportThreshold * noVotesWorstCase;
@@ -291,6 +293,7 @@ abstract contract Proposal is Settings {
         proposal_.parameters.startDate = _startDate;
         proposal_.parameters.endDate = _endDate;
         proposal_.parameters.snapshotTimepoint = snapshotTimepoint.toUint64();
+        proposal_.parameters.votingToken = address(votingToken);
         proposal_.parameters.votingMode = votingMode();
         proposal_.parameters.supportThreshold = supportThreshold();
         proposal_.parameters.minVotingPower = _applyRatioCeiled(totalVotingPower_, minParticipation());
