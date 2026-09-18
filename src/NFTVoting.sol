@@ -19,11 +19,11 @@ import {Votes} from "./base/Votes.sol";
 /// @dev Assembles from Settings (voting settings & token), Proposal (creation & execution) and Votes (voting
 contract NFTVoting is Votes {
     /// @notice The [ERC-165](https://eips.ethereum.org/EIPS/eip-165) interface ID of the contract.
-    /// @dev use keccak string due to 2 createProposal functions declared in the contract
+    /// @dev Uses the exact local overload signature because 2 `createProposal` functions exist in this contract.
     bytes4 internal constant MAJORITY_VOTING_BASE_INTERFACE_ID = this.minDuration.selector
         ^ this.getVotingToken.selector ^ this.minProposerVotingPower.selector ^ this.votingMode.selector
         ^ this.totalVotingPower.selector ^ this.getProposal.selector ^ this.updateVotingSettings.selector
-        ^ bytes4(keccak256("createProposal(bytes,(address,uint256,bytes)[],uint256,uint64,uint64,uint8,bool)"));
+        ^ bytes4(keccak256("createProposal(bytes,(address,uint256,bytes)[],uint256,uint64,uint64)"));
 
     /// @notice Initializes the component.
     /// @dev This method is required to support [ERC-1822](https://eips.ethereum.org/EIPS/eip-1822).
