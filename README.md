@@ -306,6 +306,19 @@ Security Contact Email: sirt@aragon.org
 
 Please do not use the public issue tracker to report security issues.
 
+### Security tools used
+
+1. [Pashov skills](https://github.com/pashov/skills): AI Agent skills to run a Solidity audit. Results saved in [/audits/pashov](./audits/pashov/). Findings in report have been addressed
+
+1. [ETHSkills](https://github.com/austintgriffith/ethskills): AI Agent skills built by Austin Griffin (author of ScaffoldETH). Results will be saved in [/audits/ethskills](./audits/ethskills/).
+
+1. [Trail of Bits skills](https://github.com/trailofbits/skills): AI Agent skills to run a Solidity audit. Results will be saved in [/audits/trailofbits](./audits/trailofbits/).
+
+1. [Slither](https://github.com/crytic/slither): static analysis tool to detect known vulnerabilities in Ethereum.
+
+1. [Halmos](https://github.com/a16z/halmos): symbolic testing for Solidity contracts as an entry point for formal verification
+
+
 ## Contributing 🤝
 
 Contributions are welcome! Please read our contributing guidelines to get started.
