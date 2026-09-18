@@ -20,9 +20,6 @@ import {Settings} from "./Settings.sol";
 abstract contract Proposal is Settings {
     using SafeCastUpgradeable for uint256;
 
-    /// @notice The ID of the permission required to call the `execute` function.
-    bytes32 public constant EXECUTE_PROPOSAL_PERMISSION_ID = keccak256("EXECUTE_PROPOSAL_PERMISSION");
-
     /// @notice A mapping between proposal IDs and proposal information.
     // solhint-disable-next-line named-parameters-mapping
     mapping(uint256 => Proposal) internal proposals;
@@ -37,6 +34,7 @@ abstract contract Proposal is Settings {
 
     /// @inheritdoc IProposal
     /// @dev Requires the proposal to be executable and the caller to hold voting power in the snapshotted token.
+    ///      Any token holder can call execute() in a permissionless way
     function execute(uint256 _proposalId) public virtual override(IProposal) {
         Proposal storage proposal_ = proposals[_proposalId];
         IVotesUpgradeable proposalVotingToken = IVotesUpgradeable(proposal_.parameters.votingToken);
