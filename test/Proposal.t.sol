@@ -58,8 +58,6 @@ contract ProposalTest is TestBase {
         (dao, plugin, token_) = new NFTDAOBuilder().withEarlyExecution().withNewToken(receivers).build();
         nft = GovernanceERC721(address(token_));
 
-        dao.grant(address(plugin), address(this), plugin.EXECUTE_PROPOSAL_PERMISSION_ID());
-
         vm.prank(ALICE);
         uint256 proposalId = plugin.createProposal("", _dummyActions(), 0, 0, 0);
 
@@ -84,8 +82,6 @@ contract ProposalTest is TestBase {
         (dao, plugin, token_) = new NFTDAOBuilder().withNewToken(receivers).build();
         nft = GovernanceERC721(address(token_));
 
-        dao.grant(address(plugin), address(this), plugin.EXECUTE_PROPOSAL_PERMISSION_ID());
-
         vm.prank(ALICE);
         uint256 proposalId = plugin.createProposal("", _dummyActions(), 0, 0, 0);
 
@@ -99,10 +95,27 @@ contract ProposalTest is TestBase {
         vm.warp(block.timestamp + ONE_HOUR + 1);
 
         assertTrue(plugin.canExecute(proposalId), "2 yes / 1 no passes a 50% threshold");
+        vm.prank(ALICE);
         plugin.execute(proposalId);
 
         (, bool executed,,,,,) = plugin.getProposal(proposalId);
         assertTrue(executed);
+    }
+
+    function test_WhenANonMemberTriesToExecute_AProposalExecutionReverts() external {
+        _build(_one(ALICE));
+
+        vm.prank(ALICE);
+        uint256 proposalId = plugin.createProposal("", _dummyActions(), 0, 0, 0);
+
+        vm.prank(ALICE);
+        plugin.vote(proposalId, INFTVoting.VoteOption.Yes, false);
+
+        vm.warp(block.timestamp + ONE_HOUR + 1);
+
+        vm.prank(RANDOM_ADDRESS);
+        vm.expectRevert(abi.encodeWithSelector(INFTVoting.ProposalExecutionForbidden.selector, proposalId));
+        plugin.execute(proposalId);
     }
 
     function test_WhenMinApprovalIsNotMet_TheProposalDoesNotSucceed() external {

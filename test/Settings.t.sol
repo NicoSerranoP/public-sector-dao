@@ -301,7 +301,7 @@ contract SettingsTest is TestBase {
         vm.warp(block.timestamp + ONE_HOUR + 1);
 
         assertTrue(plugin.canExecute(proposalId), "proposal should remain executable after the token update");
-        dao.grant(address(plugin), address(this), plugin.EXECUTE_PROPOSAL_PERMISSION_ID());
+        vm.prank(ALICE);
         plugin.execute(proposalId);
     }
 
@@ -369,9 +369,10 @@ contract SettingsTest is TestBase {
 
         dao.grant(address(plugin), address(this), plugin.SET_TARGET_CONFIG_PERMISSION_ID());
 
+        IPlugin.TargetConfig memory targetConfig =
+            IPlugin.TargetConfig({target: address(dao), operation: IPlugin.Operation.DelegateCall});
+
         vm.expectRevert();
-        plugin.setTargetConfig(
-            IPlugin.TargetConfig({target: address(new DAO()), operation: IPlugin.Operation.DelegateCall})
-        );
+        plugin.setTargetConfig(targetConfig);
     }
 }

@@ -124,6 +124,7 @@ contract InstallNFTVotingTest is ForkTestBase {
 
         assertTrue(plugin.canExecute(proposalId), "Proposal should be executable after reaching quorum and ending");
 
+        vm.prank(address(this));
         plugin.execute(proposalId);
 
         (, bool executedAfter,,,,,) = plugin.getProposal(proposalId);

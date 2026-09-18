@@ -6,6 +6,7 @@ pragma solidity ^0.8.8;
 
 import {Action} from "@aragon/osx-commons-contracts/src/executors/IExecutor.sol";
 import {IProposal} from "@aragon/osx-commons-contracts/src/plugin/extensions/proposal/IProposal.sol";
+import {IMembership} from "@aragon/osx-commons-contracts/src/plugin/extensions/membership/IMembership.sol";
 import {RATIO_BASE, _applyRatioCeiled} from "@aragon/osx-commons-contracts/src/utils/math/Ratio.sol";
 
 import {SafeCastUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/math/SafeCastUpgradeable.sol";
@@ -38,11 +39,18 @@ abstract contract Proposal is Settings {
     }
 
     /// @inheritdoc IProposal
-    /// @dev Requires the `EXECUTE_PROPOSAL_PERMISSION_ID` permission.
-    function execute(uint256 _proposalId) public virtual override(IProposal) auth(EXECUTE_PROPOSAL_PERMISSION_ID) {
-        if (!_canExecute(_proposalId)) {
+    /// @dev Requires the proposal to be executable and the caller to hold voting power in the snapshotted token.
+    function execute(uint256 _proposalId) public virtual override(IProposal) {
+        Proposal storage proposal_ = proposals[_proposalId];
+        IVotesUpgradeable proposalVotingToken = IVotesUpgradeable(proposal_.parameters.votingToken);
+
+        if (
+            !_canExecute(_proposalId)
+                || proposalVotingToken.getPastVotes(_msgSender(), proposal_.parameters.snapshotTimepoint) == 0
+        ) {
             revert ProposalExecutionForbidden(_proposalId);
         }
+
         _execute(_proposalId);
     }
 

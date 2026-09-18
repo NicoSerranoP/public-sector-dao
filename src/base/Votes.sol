@@ -66,7 +66,7 @@ abstract contract Votes is Proposal, IMembership {
 
         if (
             _canExecute(_proposalId)
-                && dao().hasPermission(address(this), _voter, EXECUTE_PROPOSAL_PERMISSION_ID, _msgData())
+                && proposalVotingToken.getPastVotes(_voter, proposal_.parameters.snapshotTimepoint) > 0
         ) {
             _execute(_proposalId);
         }
