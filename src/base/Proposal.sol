@@ -112,14 +112,13 @@ abstract contract Proposal is Settings {
         Proposal storage proposal_ = proposals[_proposalId];
 
         if (_isOpen) {
-            // If the proposal is still open and the voting mode is VoteReplacement,
-            // success cannot be determined until the voting period ends.
-            if (proposal_.parameters.votingMode == VotingMode.VoteReplacement) {
+            // Success while still open is only meaningful for EarlyExecution mode, since that's the
+            // only mode `_canExecute` allows to execute before `endDate`. Standard and VoteReplacement
+            // proposals can still receive opposing votes, so success can't be determined until closed.
+            if (proposal_.parameters.votingMode != VotingMode.EarlyExecution) {
                 return false;
             }
 
-            // For Standard and EarlyExecution modes, check if the support threshold
-            // has been reached early to determine success while proposal is still open.
             if (!isSupportThresholdReachedEarly(_proposalId)) {
                 return false;
             }
@@ -130,9 +129,11 @@ abstract contract Proposal is Settings {
                 return false;
             }
         }
+
         if (!isMinParticipationReached(_proposalId)) {
             return false;
         }
+
         if (!isMinApprovalReached(_proposalId)) {
             return false;
         }
