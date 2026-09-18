@@ -278,7 +278,7 @@ abstract contract Proposal is Settings {
 
         (_startDate, _endDate) = _validateProposalDates(_startDate, _endDate);
 
-        proposalId = _createProposalId(keccak256(abi.encode(_actions, _metadata)));
+        proposalId = _createProposalId(keccak256(abi.encode(_msgSender(), _actions, _metadata)));
 
         if (_proposalExists(proposalId)) {
             revert ProposalAlreadyExists(proposalId);
